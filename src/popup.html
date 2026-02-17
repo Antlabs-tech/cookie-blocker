@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="popup/index.css" />
+  </head>
+  <body>
+    <div style="width: 220px; padding: 10px 10px 0; text-align: center">
+      <img src="img/logo-16.png" />
+
+      <div id="menu_main" class="menu">
+        <a id="toggle"></a>
+        <a id="refresh">&#x21bb;</a>
+        <a id="options" data-translate="optionsTitle">Settings</a>
+      </div>
+    </div>
+
+    <div id="menu_error" class="menu menu-hidden">
+      <div style="text-align: center">
+        <h2 data-translate="genericErrorTitle"></h2>
+        <p data-translate="genericErrorTryAgain"></p>
+        <a id="error_back_button" data-translate="genericErrorBack" class="menu-item"></a>
+      </div>
+    </div>
+
+    <div id="menu_loading" class="menu menu-hidden">
+      <div style="text-align: center">
+        <img src="assets/spinner.svg" width="60" fill="#fff" alt="" />
+        <p data-translate="menuLoadingText"></p>
+      </div>
+    </div>
+
+    <script type="module" src="popup/index.js"></script>
+  </body>
+</html>
