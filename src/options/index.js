@@ -1,8 +1,10 @@
 function saveOptions() {
   const whitelist = document.getElementById('whitelist').value.split('\n')
+  const defaultActionEl = document.querySelector('input[name="default_action"]:checked')
   const settings = {
     whitelistedDomains: {},
     statusIndicators: document.getElementById('status_indicators').checked,
+    defaultAction: defaultActionEl ? defaultActionEl.value : 'reject',
   }
 
   whitelist.forEach((line) => {
@@ -31,12 +33,14 @@ function saveOptions() {
 
 function restoreOptions() {
   chrome.storage.local.get(
-    { settings: { whitelistedDomains: {}, statusIndicators: true } },
+    { settings: { whitelistedDomains: {}, statusIndicators: true, defaultAction: 'reject' } },
     ({ settings }) => {
       document.getElementById('whitelist').value = Object.keys(settings.whitelistedDomains)
         .sort()
         .join('\n')
       document.getElementById('status_indicators').checked = settings.statusIndicators
+      const action = settings.defaultAction === 'accept' ? 'accept' : 'reject'
+      document.getElementById(`default_action_${action}`).checked = true
     },
   )
 }
@@ -45,6 +49,9 @@ document.title = document.getElementById('title').textContent =
   "Settings - I still don't care about cookies"
 document.getElementById('whitelist_label').textContent =
   'List of all whitelisted websites, one website per line:'
+document.getElementById('default_action_label').textContent = 'Default action when dismissing cookie banners:'
+document.getElementById('default_action_reject_label').textContent = 'Reject all '
+document.getElementById('default_action_accept_label').textContent = 'Accept all'
 document.getElementById('status_indicators_label').textContent = 'status indicators'
 
 document.getElementById('save').setAttribute('value', 'Save settings')

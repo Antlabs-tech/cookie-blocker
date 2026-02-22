@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite'
+import tailwindcss from '@tailwindcss/vite'
 import { crx } from '@crxjs/vite-plugin'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 import manifest from './manifest.js'
@@ -14,6 +15,7 @@ export default defineConfig({
     },
   },
   plugins: [
+    tailwindcss(),
     crx({ manifest }),
     viteStaticCopy({
       targets: [

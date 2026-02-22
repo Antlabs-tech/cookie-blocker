@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+/* Scan both UI entry points so classes from options and popup are included */
+@source "./options";
+@source "./popup";
+@source "./*.html";

@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-
+    <link rel="stylesheet" href="options/index.css" />
     <style>
       body {
         padding: 20px;
@@ -25,6 +25,19 @@
       <span id="whitelist_label"></span><br />
       <textarea id="whitelist"></textarea>
     </label>
+
+    <div style="padding: 0 0 20px">
+      <span id="default_action_label"></span><br />
+
+      <label style="margin-right: 10px; cursor: pointer;">
+        <input type="radio" name="default_action" id="default_action_reject" value="reject" />
+        <span id="default_action_reject_label"></span>
+      </label>
+      <label style="cursor: pointer;">
+        <input type="radio" name="default_action" id="default_action_accept" value="accept" />
+        <span id="default_action_accept_label"></span>
+      </label>
+    </div>
 
     <label>
       <input type="checkbox" id="status_indicators" />

@@ -3,6 +3,21 @@
 /*  Use this handler if the cookie warning is used on a lot of websites */
 
 (function () {
+  const wantReject = (window.__COOKIE_BLOCKER_DEFAULT_ACTION || 'reject') === 'reject'
+  const onetrustReject = [
+    '.onetrust-pc-dark-filter:not([class*="hide"]):not([style*="none"]) ~ #onetrust-pc-sdk .ot-pc-refuse-all-handler',
+    '#onetrust-banner-sdk:not([style*="none"]) .ot-pc-refuse-all-handler',
+    '#onetrust-banner-sdk:not([style*="none"]) #onetrust-reject-all-handler',
+    '.onetrust-pc-dark-filter:not([class*="hide"]):not([style*="none"]) + #onetrust-banner-sdk #onetrust-button-group-parent:not(.has-reject-all-button) #onetrust-pc-btn-handler',
+    '.onetrust-pc-dark-filter:not([class*="hide"]):not([style*="none"]) ~ #onetrust-pc-sdk .onetrust-close-btn-handler:first-child',
+  ]
+  const onetrustAccept = [
+    '.onetrust-pc-dark-filter:not([class*="hide"]):not([style*="none"]) ~ #onetrust-pc-sdk .ot-pc-accept-all-handler',
+    '#onetrust-banner-sdk:not([style*="none"]) .ot-pc-accept-all-handler',
+    '#onetrust-banner-sdk:not([style*="none"]) #onetrust-accept-btn-handler',
+    '.onetrust-pc-dark-filter:not([class*="hide"]):not([style*="none"]) + #onetrust-banner-sdk #onetrust-button-group-parent #onetrust-pc-btn-handler',
+    '.onetrust-pc-dark-filter:not([class*="hide"]):not([style*="none"]) ~ #onetrust-pc-sdk .onetrust-close-btn-handler:first-child',
+  ]
   const searchPairs = {
     ".if6_eprivacy": [".ebutton > a[data-form*='eprivacy_optin_decline']"],
 
@@ -16,14 +31,7 @@
       'div[data-testid="first-line-buttons"] > button:first-child',
     ],
 
-    "#onetrust-consent-sdk": [
-      '.onetrust-pc-dark-filter:not([class*="hide"]):not([style*="none"]) ~ #onetrust-pc-sdk .ot-pc-refuse-all-handler',
-      '#onetrust-banner-sdk:not([style*="none"]) .ot-pc-refuse-all-handler',
-      '#onetrust-banner-sdk:not([style*="none"]) #onetrust-reject-all-handler',
-
-      '.onetrust-pc-dark-filter:not([class*="hide"]):not([style*="none"]) + #onetrust-banner-sdk #onetrust-button-group-parent:not(.has-reject-all-button) #onetrust-pc-btn-handler',
-      '.onetrust-pc-dark-filter:not([class*="hide"]):not([style*="none"]) ~ #onetrust-pc-sdk .onetrust-close-btn-handler:first-child',
-    ],
+    "#onetrust-consent-sdk": wantReject ? onetrustReject : onetrustAccept,
 
     ".message-container": [
       "button.sp_choice_type_12:not(.cmp-no-pur-privacy-btn)",

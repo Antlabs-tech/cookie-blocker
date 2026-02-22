@@ -67,14 +67,17 @@ const mainInterval = setInterval(function () {
         }
       } else {
         // The latest cookie popup, desktop and mobile
-
+        const wantReject = (window.__COOKIE_BLOCKER_DEFAULT_ACTION || 'reject') === 'reject'
         const container = _sl('div[aria-modal="true"][style*="block"]');
 
         if (
           container &&
           _sl('a[href*="policies.google.com/technologies/cookies"]', container)
         ) {
-          _sl("button + button", container).click();
+          // First button = Reject all, second = Accept all
+          const btn = wantReject ? _sl("button", container) : _sl("button + button", container)
+          if (btn) btn.click();
+          else _sl("button + button", container).click();
 
           // Autofocus on the search field
           element = _sl(

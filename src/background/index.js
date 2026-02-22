@@ -5,7 +5,7 @@ let cachedRules = {}
 let tabList = {}
 const xmlTabs = {}
 let lastDeclarativeNetRuleId = 1
-let settings = { statusIndicators: true, whitelistedDomains: {} }
+let settings = { statusIndicators: true, whitelistedDomains: {}, defaultAction: 'reject' }
 const isManifestV3 = chrome.runtime.getManifest().manifest_version == 3
 
 // Badges
@@ -51,7 +51,7 @@ function updateSettings() {
   return new Promise((resolve) => {
     lastDeclarativeNetRuleId = 1
     chrome.storage.local.get(
-      { settings: { whitelistedDomains: {}, statusIndicators: true } },
+      { settings: { whitelistedDomains: {}, statusIndicators: true, defaultAction: 'reject' } },
       async ({ settings: storedSettings }) => {
         settings = storedSettings
 
@@ -486,6 +486,17 @@ function doTheMagic(tabId, frameId, anotherTry) {
       }
       return
     }
+
+    // Set default action preference for injected handlers (reject vs accept all)
+    const defaultAction = settings.defaultAction === 'accept' ? 'accept' : 'reject'
+    executeScript({
+      tabId,
+      frameId: frameId || 0,
+      func: (action) => {
+        window.__COOKIE_BLOCKER_DEFAULT_ACTION = action
+      },
+      args: [defaultAction],
+    })
 
     // Common social embeds
     executeScript({ tabId, frameId, file: 'data/js/embedsHandler.js' })
