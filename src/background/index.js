@@ -7,6 +7,7 @@ const xmlTabs = {}
 let lastDeclarativeNetRuleId = 1
 let settings = { statusIndicators: true, whitelistedDomains: {}, defaultAction: 'reject' }
 const isManifestV3 = chrome.runtime.getManifest().manifest_version == 3
+const dismissedCountByTabId = {}
 
 // Badges
 function setBadge(tabId, text) {
@@ -182,6 +183,7 @@ function onRemovedListener(tabId) {
   if (tabList[tabId]) {
     delete tabList[tabId]
   }
+  delete dismissedCountByTabId[tabId]
 }
 
 async function recreateTabList(magic) {
@@ -551,6 +553,7 @@ chrome.runtime.onMessage.addListener((request, info, sendResponse) => {
       if (request.tabId && tabList[request.tabId]) {
         if (request.command == 'get_active_tab') {
           const response = { tab: tabList[request.tabId] }
+          response.dismissedCount = dismissedCountByTabId[request.tabId] || 0
 
           if (response.tab.whitelisted) {
             response.tab.hostname = getWhitelistedDomain(tabList[request.tabId])
@@ -582,6 +585,11 @@ chrome.runtime.onMessage.addListener((request, info, sendResponse) => {
           chrome.tabs.create({
             url: chrome.runtime.getURL('src/options.html'),
           })
+        } else if (request.command == 'cookie_warning_dismissed') {
+          const tabId = info.tab?.id
+          if (tabId != null) {
+            dismissedCountByTabId[tabId] = (dismissedCountByTabId[tabId] || 0) + 1
+          }
         }
       }
     } else if (request == 'update_settings') {

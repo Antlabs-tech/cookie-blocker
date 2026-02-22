@@ -2,6 +2,8 @@ const toggle = document.getElementById('toggle')
 const refresh = document.getElementById('refresh')
 const report = document.getElementById('report')
 const options = document.getElementById('options')
+const statsLineContainer = document.getElementById('stats-line-container')
+const refreshHostname = document.getElementById('refresh-hostname')
 
 let currentTab = false
 
@@ -15,7 +17,7 @@ toggle.addEventListener('click', function () {
   )
 })
 
-refresh.addEventListener('click', function () {
+refresh.querySelector('button').addEventListener('click', function () {
   chrome.runtime.sendMessage(
     {
       command: 'refresh_page',
@@ -50,19 +52,38 @@ function reloadMenu(enableRefreshButton) {
         currentTab = message.tab ? message.tab : false
 
         if (message.tab && message.tab.hostname) {
-          toggle.textContent = message.tab.whitelisted
-            ? `Enable extension on ${message.tab.hostname}`
-            : `Disable extension on ${message.tab.hostname}`
+          toggle.querySelector('p').textContent = message.tab.whitelisted
+            ? `Resume on this site`
+            : `Pause on this site`
+          toggle.querySelector('#toggle-icon').textContent = message.tab.whitelisted
+            ? 'play_circle'
+            : 'pause_circle'
 
-          toggle.style.display = 'block'
+          toggle.style.display = 'flex'
+          if (!message.tab.whitelisted) {
+            statsLineContainer.style.display = 'flex'
+          }
         } else {
-          toggle.textContent = ''
+          toggle.querySelector('p').textContent = ''
           toggle.style.display = 'none'
         }
 
         if (typeof enableRefreshButton != 'undefined') {
+          refreshHostname.textContent = message.tab.hostname
           refresh.style.display = 'block'
           toggle.style.display = 'none'
+          statsLineContainer.style.display = 'none'
+        }
+
+        const statsEl = document.getElementById('stats-line')
+        if (statsEl) {
+          const n = message.dismissedCount
+          if (typeof n === 'number' && n > 0) {
+            statsEl.textContent =
+              n === 1 ? '1 banner dismissed on this page' : `${n} banners dismissed on this page`
+          } else {
+            statsEl.textContent = 'Cookie banners auto-dismissed'
+          }
         }
       },
     )
