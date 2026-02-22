@@ -7,6 +7,11 @@
   --color-border-light: #f1f5f9;
   --color-text-main: #0f172a;
   --color-text-muted: #64748b;
+  --color-bg-main: #F8F9FA;
+  --color-border-defined: #E9ECEF;
+  --color-text-charcoal: #1F2937;
+  --color-text-muted-dark: #4B5563;
+  --color-badge-bg: #E2E8F0;
 
   /* Font family (override default sans) */
   --font-sans: "Inter", sans-serif;

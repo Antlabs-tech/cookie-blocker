@@ -1,6 +1,6 @@
 @import "../tailwind.css";
 
-body {
+/* body {
   -moz-user-select: none;
   user-select: none;
   font:
@@ -10,7 +10,7 @@ body {
   background: #e8e8e8;
   padding: 0;
   margin: 0;
-}
+} */
 
 a[id] {
   display: block;

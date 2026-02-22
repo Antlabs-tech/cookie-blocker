@@ -60,8 +60,8 @@ function reloadMenu(enableRefreshButton) {
             : 'pause_circle'
 
           toggle.style.display = 'flex'
-          if (!message.tab.whitelisted) {
-            statsLineContainer.style.display = 'flex'
+          if (message.tab.whitelisted) {
+            statsLineContainer.style.display = 'none'
           }
         } else {
           toggle.querySelector('p').textContent = ''
