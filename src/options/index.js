@@ -1,39 +1,46 @@
 function saveOptions() {
   const whitelist = document.getElementById('whitelist').value.split('\n')
   const defaultActionEl = document.querySelector('input[name="default_action"]:checked')
-  const settings = {
-    whitelistedDomains: {},
-    statusIndicators: document.getElementById('status_indicators').checked,
-    defaultAction: defaultActionEl ? defaultActionEl.value : 'reject',
-  }
 
-  whitelist.forEach((line) => {
-    line = line
-      .trim()
-      .replace(/^\w*:?\/+/i, '')
-      .replace(/^w{2,3}\d*\./i, '')
-      .split('/')[0]
-      .split(':')[0]
+  chrome.storage.local.get(
+    { settings: { whitelistedDomains: {}, statusIndicators: true, defaultAction: 'reject', enabled: true } },
+    (result) => {
+      const settings = {
+        ...result.settings,
+        whitelistedDomains: {},
+        statusIndicators: document.getElementById('status_indicators').checked,
+        defaultAction: defaultActionEl ? defaultActionEl.value : 'reject',
+      }
 
-    if (line.length > 0 && line.length < 100) {
-      settings.whitelistedDomains[line] = true
-    }
-  })
+      whitelist.forEach((line) => {
+        line = line
+          .trim()
+          .replace(/^\w*:?\/+/i, '')
+          .replace(/^w{2,3}\d*\./i, '')
+          .split('/')[0]
+          .split(':')[0]
 
-  chrome.storage.local.set({ settings }, () => {
-    document.getElementById('status_saved').style.display = 'inline'
+        if (line.length > 0 && line.length < 100) {
+          settings.whitelistedDomains[line] = true
+        }
+      })
 
-    setTimeout(function () {
-      document.getElementById('status_saved').style.display = 'none'
-    }, 2000)
+      chrome.storage.local.set({ settings }, () => {
+        document.getElementById('status_saved').style.display = 'inline'
 
-    chrome.runtime.sendMessage('update_settings')
-  })
+        setTimeout(function () {
+          document.getElementById('status_saved').style.display = 'none'
+        }, 2000)
+
+        chrome.runtime.sendMessage('update_settings')
+      })
+    },
+  )
 }
 
 function restoreOptions() {
   chrome.storage.local.get(
-    { settings: { whitelistedDomains: {}, statusIndicators: true, defaultAction: 'reject' } },
+    { settings: { whitelistedDomains: {}, statusIndicators: true, defaultAction: 'reject', enabled: true } },
     ({ settings }) => {
       document.getElementById('whitelist').value = Object.keys(settings.whitelistedDomains)
         .sort()

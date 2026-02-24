@@ -5,7 +5,12 @@ let cachedRules = {}
 let tabList = {}
 const xmlTabs = {}
 let lastDeclarativeNetRuleId = 1
-let settings = { statusIndicators: true, whitelistedDomains: {}, defaultAction: 'reject' }
+let settings = {
+  enabled: true,
+  statusIndicators: true,
+  whitelistedDomains: {},
+  defaultAction: 'reject',
+}
 const isManifestV3 = chrome.runtime.getManifest().manifest_version == 3
 const dismissedCountByTabId = {}
 
@@ -32,6 +37,28 @@ function setDisabledBadge(tabId) {
   setBadge(tabId, '⛔')
 }
 
+/**
+ * Sets the correct badge for a tab based on current settings and tab state.
+ * Used when settings change (e.g. enable/disable extension) to refresh all tab badges.
+ */
+function setBadgeForTab(tabId) {
+  if (!settings.statusIndicators) return
+  if (settings.enabled === false) {
+    setDisabledBadge(tabId)
+    return
+  }
+  const tab = tabList[tabId]
+  if (tab && tab.whitelisted) {
+    setDisabledBadge(tabId)
+    return
+  }
+  if (!tab || tab.url.indexOf('http') != 0) {
+    setBadge(tabId, null)
+    return
+  }
+  setBadge(tabId, null)
+}
+
 // Common functions
 function getHostname(url, cleanup) {
   try {
@@ -51,14 +78,26 @@ function getHostname(url, cleanup) {
 function updateSettings() {
   return new Promise((resolve) => {
     lastDeclarativeNetRuleId = 1
+
     chrome.storage.local.get(
-      { settings: { whitelistedDomains: {}, statusIndicators: true, defaultAction: 'reject' } },
+      {
+        settings: {
+          enabled: true,
+          whitelistedDomains: {},
+          statusIndicators: true,
+          defaultAction: 'reject',
+        },
+      },
       async ({ settings: storedSettings }) => {
         settings = storedSettings
 
         if (isManifestV3) {
           await updateWhitelistRules()
         }
+
+        const tabs = await chrome.tabs.query({})
+        tabs.forEach((tab) => setBadgeForTab(tab.id))
+
         resolve()
       },
     )
@@ -465,6 +504,11 @@ function doTheMagic(tabId, frameId, anotherTry) {
     return
   }
 
+  if (settings.enabled === false) {
+    setDisabledBadge(tabId)
+    return
+  }
+
   if (tabList[tabId].whitelisted) {
     setDisabledBadge(tabId)
     return
@@ -552,7 +596,7 @@ chrome.runtime.onMessage.addListener((request, info, sendResponse) => {
     if (typeof request == 'object') {
       if (request.tabId && tabList[request.tabId]) {
         if (request.command == 'get_active_tab') {
-          const response = { tab: tabList[request.tabId] }
+          const response = { tab: tabList[request.tabId], enabled: settings.enabled !== false }
           response.dismissedCount = dismissedCountByTabId[request.tabId] || 0
 
           if (response.tab.whitelisted) {
@@ -562,6 +606,12 @@ chrome.runtime.onMessage.addListener((request, info, sendResponse) => {
           responseSend = true
         } else if (request.command == 'toggle_extension') {
           toggleWhitelist(tabList[request.tabId])
+          executeScript({
+            tabId: request.tabId,
+            func: () => {
+              window.location.reload()
+            },
+          })
         } else if (request.command == 'report_website') {
           reportWebsite(
             info,
