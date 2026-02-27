@@ -533,17 +533,6 @@ function doTheMagic(tabId, frameId, anotherTry) {
       return
     }
 
-    // Set default action preference for injected handlers (reject vs accept all)
-    const defaultAction = settings.defaultAction === 'accept' ? 'accept' : 'reject'
-    executeScript({
-      tabId,
-      frameId: frameId || 0,
-      func: (action) => {
-        window.__COOKIE_BLOCKER_DEFAULT_ACTION = action
-      },
-      args: [defaultAction],
-    })
-
     // Common social embeds
     executeScript({ tabId, frameId, file: 'data/js/embedsHandler.js' })
 
