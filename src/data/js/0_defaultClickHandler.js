@@ -2,20 +2,32 @@
 /*	Executed by default if no rule detected */
 /*  Use this handler if the cookie warning is used on a lot of websites */
 
-const readLocalStorage = async (key) => {
-  return new Promise((resolve, reject) => {
-    chrome.storage.local.get([key], function (result) {
-      if (result[key] === undefined) {
-        reject()
-      } else {
-        resolve(result[key])
+const readLocalStorageDefault = async (key) => {
+  return new Promise((resolve) => {
+    try {
+      if (!chrome?.storage?.local) {
+        resolve(undefined)
+        return
       }
-    })
+      chrome.storage.local.get([key], function (result) {
+        try {
+          if (chrome.runtime?.id === undefined) {
+            resolve(undefined)
+            return
+          }
+          resolve(result[key])
+        } catch (_) {
+          resolve(undefined)
+        }
+      })
+    } catch (_) {
+      resolve(undefined)
+    }
   })
 }
 
-;;(async function () {
-  let settings = await readLocalStorage('settings')
+;(async function () {
+  let settings = await readLocalStorageDefault('settings')
   const wantReject = settings?.defaultAction === 'reject'
   const onetrustReject = [
     '.onetrust-pc-dark-filter:not([class*="hide"]):not([style*="none"]) ~ #onetrust-pc-sdk .ot-pc-refuse-all-handler',
@@ -539,7 +551,7 @@ const readLocalStorage = async (key) => {
       document.querySelectorAll(searchPairsJoinedKeys).forEach(function (box) {
         searchPairsKeys.forEach(function (selector) {
           if (box.matches(selector)) {
-            ;;(box.shadowRoot || box)
+            ;(box.shadowRoot || box)
               .querySelectorAll(searchPairs[selector].join(','))
               .forEach(function (element) {
                 if (element.click && !element.classList.contains('idcac')) {

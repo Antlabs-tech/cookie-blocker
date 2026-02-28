@@ -6,14 +6,26 @@ function _sl(selector, container) {
 }
 
 const readLocalStorage = async (key) => {
-  return new Promise((resolve, reject) => {
-    chrome.storage.local.get([key], function (result) {
-      if (result[key] === undefined) {
-        reject()
-      } else {
-        resolve(result[key])
+  return new Promise((resolve) => {
+    try {
+      if (!chrome?.storage?.local) {
+        resolve(undefined)
+        return
       }
-    })
+      chrome.storage.local.get([key], function (result) {
+        try {
+          if (chrome.runtime?.id === undefined) {
+            resolve(undefined)
+            return
+          }
+          resolve(result[key])
+        } catch (_) {
+          resolve(undefined)
+        }
+      })
+    } catch (_) {
+      resolve(undefined)
+    }
   })
 }
 

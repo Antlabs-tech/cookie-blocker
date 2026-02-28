@@ -52,8 +52,7 @@ function restoreOptions() {
   )
 }
 
-document.title = document.getElementById('title').textContent =
-  "Settings - I still don't care about cookies"
+document.title = document.getElementById('title').textContent = 'Settings - Cookie Blocker'
 document.getElementById('whitelist_label').textContent =
   'List of all whitelisted websites, one website per line:'
 document.getElementById('default_action_label').textContent = 'Default action when dismissing cookie banners:'
