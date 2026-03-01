@@ -23,6 +23,7 @@ export default defineConfig({
         { src: 'src/assets/*', dest: 'assets' },
         { src: 'src/data/js/*', dest: 'data/js' },
         { src: 'src/data/css/*', dest: 'data/css' },
+        { src: 'src/_locales/*', dest: '_locales' },
       ],
     }),
   ],

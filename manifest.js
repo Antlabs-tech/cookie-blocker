@@ -3,8 +3,9 @@ import packageData from './package.json'
 
 export default defineManifest({
   manifest_version: 3,
-  name: 'Cookie Blocker',
-  description: packageData.description || 'Cookie Blocker',
+  name: '__MSG_appName__',
+  description: '__MSG_shortDesc__',
+  default_locale: 'en',
   version: packageData.version,
   icons: {
     16: 'src/img/logo-16.png',
