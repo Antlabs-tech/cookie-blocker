@@ -52,12 +52,8 @@ refresh.querySelector('button').addEventListener('click', function () {
 })
 
 options.addEventListener('click', function () {
-  chrome.runtime.sendMessage(
-    {
-      command: 'open_options_page',
-    },
-    () => window.close(),
-  )
+  chrome.sidePanel.open({ windowId: currentTab?.windowId })
+  window.close()
 })
 
 document

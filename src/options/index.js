@@ -52,14 +52,6 @@ function restoreOptions() {
   )
 }
 
-document.title = document.getElementById('title').textContent = 'Settings - Cookie Blocker'
-document.getElementById('whitelist_label').textContent =
-  'List of all whitelisted websites, one website per line:'
-document.getElementById('default_action_label').textContent = 'Default action when dismissing cookie banners:'
-document.getElementById('default_action_reject_label').textContent = 'Reject all '
-document.getElementById('default_action_accept_label').textContent = 'Accept all'
-document.getElementById('status_indicators_label').textContent = 'status indicators'
-
 document.getElementById('save').setAttribute('value', 'Save settings')
 document.getElementById('status_saved').textContent = 'Saved successfully'
 

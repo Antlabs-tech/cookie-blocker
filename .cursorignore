@@ -7,3 +7,4 @@ build
 .cursorignore
 .env
 banners-and-icons
+src/_locales

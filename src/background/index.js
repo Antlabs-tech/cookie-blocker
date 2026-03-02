@@ -636,11 +636,7 @@ chrome.runtime.onMessage.addListener((request, info, sendResponse) => {
           })
         }
       } else {
-        if (request.command == 'open_options_page') {
-          chrome.tabs.create({
-            url: chrome.runtime.getURL('src/options.html'),
-          })
-        } else if (request.command == 'cookie_warning_dismissed') {
+        if (request.command == 'cookie_warning_dismissed') {
           const tabId = info.tab?.id
           if (tabId != null) {
             dismissedCountByTabId[tabId] = (dismissedCountByTabId[tabId] || 0) + 1

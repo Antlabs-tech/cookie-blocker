@@ -11,6 +11,7 @@ export default defineManifest({
     16: 'src/img/logo-16.png',
     32: 'src/img/logo-32.png',
     48: 'src/img/logo-48.png',
+    64: 'src/img/logo-64.png',
     128: 'src/img/logo-128.png',
   },
   author: 'Anton Zhirkov',
@@ -22,13 +23,16 @@ export default defineManifest({
     'declarativeNetRequestWithHostAccess',
     'webNavigation',
     'scripting',
+    'sidePanel',
   ],
   host_permissions: ['http://*/*', 'https://*/*'],
   background: {
     service_worker: 'src/background/index.js',
     type: 'module',
   },
-  options_page: 'src/options.html',
+  side_panel: {
+    default_path: 'src/options.html',
+  },
   action: {
     default_popup: 'src/popup.html',
     default_icon: 'src/img/logo-48.png',
