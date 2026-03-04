@@ -1,35 +1,36 @@
 /*  Google handler */
 /*  Handler is only used for Google */
 
-function _sl(selector, container) {
-  return (container || document).querySelector(selector)
-}
+;(function () {
+  function _sl(selector, container) {
+    return (container || document).querySelector(selector)
+  }
 
-const readLocalStorage = async (key) => {
-  return new Promise((resolve) => {
-    try {
-      if (!chrome?.storage?.local) {
-        resolve(undefined)
-        return
-      }
-      chrome.storage.local.get([key], function (result) {
-        try {
-          if (chrome.runtime?.id === undefined) {
-            resolve(undefined)
-            return
-          }
-          resolve(result[key])
-        } catch (_) {
+  const readLocalStorage = async (key) => {
+    return new Promise((resolve) => {
+      try {
+        if (!chrome?.storage?.local) {
           resolve(undefined)
+          return
         }
-      })
-    } catch (_) {
-      resolve(undefined)
-    }
-  })
-}
+        chrome.storage.local.get([key], function (result) {
+          try {
+            if (chrome.runtime?.id === undefined) {
+              resolve(undefined)
+              return
+            }
+            resolve(result[key])
+          } catch (_) {
+            resolve(undefined)
+          }
+        })
+      } catch (_) {
+        resolve(undefined)
+      }
+    })
+  }
 
-const mainInterval = setInterval(function () {
+  const mainInterval = setInterval(function () {
   const html = _sl('html')
 
   if (!html || /idc8_343/.test(html.className)) {
@@ -131,3 +132,4 @@ const mainInterval = setInterval(function () {
     250 + counter * 10,
   )
 }, 250)
+})()

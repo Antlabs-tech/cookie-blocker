@@ -2,31 +2,31 @@
 /*	Executed by default if no rule detected */
 /*  Use this handler if the cookie warning is used on a lot of websites */
 
-const readLocalStorageDefault = async (key) => {
-  return new Promise((resolve) => {
-    try {
-      if (!chrome?.storage?.local) {
-        resolve(undefined)
-        return
-      }
-      chrome.storage.local.get([key], function (result) {
-        try {
-          if (chrome.runtime?.id === undefined) {
-            resolve(undefined)
-            return
-          }
-          resolve(result[key])
-        } catch (_) {
-          resolve(undefined)
-        }
-      })
-    } catch (_) {
-      resolve(undefined)
-    }
-  })
-}
-
 ;(async function () {
+  const readLocalStorageDefault = async (key) => {
+    return new Promise((resolve) => {
+      try {
+        if (!chrome?.storage?.local) {
+          resolve(undefined)
+          return
+        }
+        chrome.storage.local.get([key], function (result) {
+          try {
+            if (chrome.runtime?.id === undefined) {
+              resolve(undefined)
+              return
+            }
+            resolve(result[key])
+          } catch (_) {
+            resolve(undefined)
+          }
+        })
+      } catch (_) {
+        resolve(undefined)
+      }
+    })
+  }
+
   let settings = await readLocalStorageDefault('settings')
   const wantReject = settings?.defaultAction === 'reject'
   const onetrustReject = [
