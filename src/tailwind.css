@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   /* Colors */
   --color-primary: #1A56DB;
@@ -14,6 +16,10 @@
   --color-text-charcoal: #1F2937;
   --color-text-muted-dark: #4B5563;
   --color-badge-bg: #E2E8F0;
+
+  /* Dark mode surfaces */
+  --color-surface-dark: #1e293b;
+  --color-surface-dark-elevated: #273449;
 
   /* Font family (override default sans) */
   --font-sans: "Inter", sans-serif;

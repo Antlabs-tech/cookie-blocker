@@ -10,6 +10,7 @@ let settings = {
   statusIndicators: true,
   whitelistedDomains: {},
   defaultAction: 'reject',
+  darkMode: false,
 }
 const isManifestV3 = chrome.runtime.getManifest().manifest_version == 3
 const dismissedCountByTabId = {}
@@ -86,6 +87,7 @@ function updateSettings() {
           whitelistedDomains: {},
           statusIndicators: true,
           defaultAction: 'reject',
+          darkMode: false,
         },
       },
       async ({ settings: storedSettings }) => {

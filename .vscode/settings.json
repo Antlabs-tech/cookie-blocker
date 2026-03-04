@@ -1,3 +1,6 @@
 {
-  "css.customData": [".vscode/tailwindcss-custom-data.json"]
+  "css.customData": [".vscode/tailwindcss-custom-data.json"],
+  "airun.settings": {
+    "workspaceId": "2bfc6f52-6355-4ca0-b3ca-b64a91760c1c"
+  }
 }

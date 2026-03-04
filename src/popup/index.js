@@ -98,6 +98,11 @@ function reloadMenu(enableRefreshButton) {
 
         applyEnabledUI(enabled)
 
+        // Apply dark mode from stored settings
+        chrome.storage.local.get({ settings: { darkMode: false } }, ({ settings }) => {
+          document.documentElement.classList.toggle('dark', settings.darkMode)
+        })
+
         if (enabled && message.tab && message.tab.hostname) {
           toggle.querySelector('p').textContent = message.tab.whitelisted
             ? `Resume on this site`
@@ -151,5 +156,9 @@ function switchMenu(id) {
     }
   }
 }
+
+chrome.storage?.local?.get({ settings: { darkMode: false } }, ({ settings }) => {
+  if (settings?.darkMode) document.documentElement.classList.add('dark')
+})
 
 reloadMenu()

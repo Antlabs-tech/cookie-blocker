@@ -1,55 +1,64 @@
+const defaultSettings = {
+  whitelistedDomains: {},
+  statusIndicators: true,
+  defaultAction: 'reject',
+  enabled: true,
+  darkMode: false,
+}
+
+function applyDarkMode(enabled) {
+  document.documentElement.classList.toggle('dark', enabled)
+}
+
 function saveOptions() {
   const whitelist = document.getElementById('whitelist').value.split('\n')
   const defaultActionEl = document.querySelector('input[name="default_action"]:checked')
 
-  chrome.storage.local.get(
-    { settings: { whitelistedDomains: {}, statusIndicators: true, defaultAction: 'reject', enabled: true } },
-    (result) => {
-      const settings = {
-        ...result.settings,
-        whitelistedDomains: {},
-        statusIndicators: document.getElementById('status_indicators').checked,
-        defaultAction: defaultActionEl ? defaultActionEl.value : 'reject',
+  chrome.storage.local.get({ settings: defaultSettings }, (result) => {
+    const settings = {
+      ...result.settings,
+      whitelistedDomains: {},
+      statusIndicators: document.getElementById('status_indicators').checked,
+      defaultAction: defaultActionEl ? defaultActionEl.value : 'reject',
+      darkMode: document.getElementById('dark_mode').checked,
+    }
+
+    whitelist.forEach((line) => {
+      line = line
+        .trim()
+        .replace(/^\w*:?\/+/i, '')
+        .replace(/^w{2,3}\d*\./i, '')
+        .split('/')[0]
+        .split(':')[0]
+
+      if (line.length > 0 && line.length < 100) {
+        settings.whitelistedDomains[line] = true
       }
+    })
 
-      whitelist.forEach((line) => {
-        line = line
-          .trim()
-          .replace(/^\w*:?\/+/i, '')
-          .replace(/^w{2,3}\d*\./i, '')
-          .split('/')[0]
-          .split(':')[0]
+    chrome.storage.local.set({ settings }, () => {
+      document.getElementById('status_saved').style.display = 'inline'
 
-        if (line.length > 0 && line.length < 100) {
-          settings.whitelistedDomains[line] = true
-        }
-      })
+      setTimeout(function () {
+        document.getElementById('status_saved').style.display = 'none'
+      }, 2000)
 
-      chrome.storage.local.set({ settings }, () => {
-        document.getElementById('status_saved').style.display = 'inline'
-
-        setTimeout(function () {
-          document.getElementById('status_saved').style.display = 'none'
-        }, 2000)
-
-        chrome.runtime.sendMessage('update_settings')
-      })
-    },
-  )
+      chrome.runtime.sendMessage('update_settings')
+    })
+  })
 }
 
 function restoreOptions() {
-  chrome.storage.local.get(
-    { settings: { whitelistedDomains: {}, statusIndicators: true, defaultAction: 'reject', enabled: true } },
-    ({ settings }) => {
-      document.getElementById('whitelist').value = Object.keys(settings.whitelistedDomains)
-        .sort()
-        .join('\n')
-      document.getElementById('status_indicators').checked = settings.statusIndicators
-      const action = settings.defaultAction === 'accept' ? 'accept' : 'reject'
-      document.getElementById(`default_action_${action}`).checked = true
-    },
-  )
+  chrome.storage.local.get({ settings: defaultSettings }, ({ settings }) => {
+    document.getElementById('whitelist').value = Object.keys(settings.whitelistedDomains)
+      .sort()
+      .join('\n')
+    document.getElementById('status_indicators').checked = settings.statusIndicators
+    const action = settings.defaultAction === 'accept' ? 'accept' : 'reject'
+    document.getElementById(`default_action_${action}`).checked = true
+    document.getElementById('dark_mode').checked = settings.darkMode
+    applyDarkMode(settings.darkMode)
+  })
 }
 
 document.getElementById('save').setAttribute('value', 'Save settings')
@@ -57,3 +66,13 @@ document.getElementById('status_saved').textContent = 'Saved successfully'
 
 document.addEventListener('DOMContentLoaded', restoreOptions)
 document.getElementById('save').addEventListener('click', saveOptions)
+
+// Apply dark mode instantly on toggle (no need to wait for Save)
+document.getElementById('dark_mode').addEventListener('change', (e) => {
+  applyDarkMode(e.target.checked)
+  saveOptions()
+})
+
+chrome.storage?.local?.get({ settings: { darkMode: false } }, ({ settings }) => {
+  if (settings?.darkMode) document.documentElement.classList.add('dark')
+})
