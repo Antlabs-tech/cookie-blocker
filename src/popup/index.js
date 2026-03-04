@@ -9,8 +9,18 @@ const protectionStatus = document.getElementById('protection-status')
 const protectionOffHint = document.getElementById('protection-off-hint')
 const footerDot = document.getElementById('footer-dot')
 const footerStatus = document.getElementById('footer-status')
+const restrictedPageMessage = document.getElementById('restricted-page-message')
 
 let currentTab = false
+
+function showRestrictedPageMessage() {
+  if (!restrictedPageMessage) return
+  restrictedPageMessage.classList.remove('hidden')
+  clearTimeout(restrictedPageMessage._hideTimer)
+  restrictedPageMessage._hideTimer = setTimeout(() => {
+    restrictedPageMessage.classList.add('hidden')
+  }, 4000)
+}
 
 protectionToggle.addEventListener('change', function () {
   chrome.storage.local.get(['settings'], (result) => {
@@ -25,8 +35,12 @@ protectionToggle.addEventListener('change', function () {
         command: 'refresh_page',
         tabId: currentTab.id,
       },
-
-      () => reloadMenu(),
+      (response) => {
+        if (response?.error === 'restricted_page') {
+          showRestrictedPageMessage()
+        }
+        reloadMenu()
+      },
     )
   })
 })
@@ -37,7 +51,12 @@ toggle.addEventListener('click', function () {
       command: 'toggle_extension',
       tabId: currentTab.id,
     },
-    () => reloadMenu(),
+    (response) => {
+      if (response?.error === 'restricted_page') {
+        showRestrictedPageMessage()
+      }
+      reloadMenu()
+    },
   )
 })
 
@@ -47,7 +66,13 @@ refresh.querySelector('button').addEventListener('click', function () {
       command: 'refresh_page',
       tabId: currentTab.id,
     },
-    () => window.close(),
+    (response) => {
+      if (response?.error === 'restricted_page') {
+        showRestrictedPageMessage()
+      } else {
+        window.close()
+      }
+    },
   )
 })
 

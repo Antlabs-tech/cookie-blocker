@@ -475,7 +475,34 @@ function getBrowserAndVersion() {
 
 // Adding custom CSS/JS
 
-function activateDomain(hostname, tabId, frameId) {
+function isRestrictedInjectionUrl(url) {
+  if (typeof url !== 'string') return true
+  try {
+    const u = new URL(url)
+    if (/^(chrome|edge|about):$/i.test(u.protocol)) return true
+    if (u.hostname === 'chrome.google.com' && u.pathname.startsWith('/webstore')) return true
+    if (u.hostname === 'chromewebstore.google.com') return true
+  } catch {
+    return true
+  }
+  return false
+}
+
+function isRestrictedPageError(err) {
+  const msg =
+    (err && err.message) ||
+    (chrome.runtime.lastError && chrome.runtime.lastError.message) ||
+    ''
+  return (
+    typeof msg === 'string' &&
+    (msg.includes('Cannot access contents') ||
+      msg.includes('Extension manifest must request permission') ||
+      msg.includes('extensions gallery') ||
+      msg.includes('cannot be scripted'))
+  )
+}
+
+function activateDomain(hostname, tabId, frameId, documentId) {
   if (!cachedRules[hostname]) {
     cachedRules[hostname] = rules[hostname] || {}
   }
@@ -486,25 +513,25 @@ function activateDomain(hostname, tabId, frameId) {
 
   const cachedRule = cachedRules[hostname]
   let status = false
+  const injectionOpts = { tabId, frameId, documentId }
 
   // cached_rule.s = Custom css for webpage
   // cached_rule.c = Common css for webpage
   // cached_rule.j = Common js  for webpage
 
   if (typeof cachedRule.s != 'undefined') {
-    insertCSS({ tabId, frameId: frameId || 0, css: cachedRule.s })
+    insertCSS({ ...injectionOpts, frameId: frameId || 0, css: cachedRule.s })
     status = true
   }
 
   if (typeof cachedRule.c != 'undefined') {
-    insertCSS({ tabId, frameId: frameId || 0, css: commons[cachedRule.c] })
+    insertCSS({ ...injectionOpts, frameId: frameId || 0, css: commons[cachedRule.c] })
     status = true
   }
 
   if (typeof cachedRule.j != 'undefined') {
     executeScript({
-      tabId,
-      frameId,
+      ...injectionOpts,
       file: `data/js/${commonJSHandlers[cachedRule.j]}.js`,
     })
     status = true
@@ -517,10 +544,11 @@ function activateDomain(hostname, tabId, frameId) {
   return status
 }
 
-function doTheMagic(tabId, frameId, anotherTry) {
+async function doTheMagic(tabId, frameId, anotherTry) {
   if (!tabList[tabId] || tabList[tabId].url.indexOf('http') != 0) {
     return
   }
+  if (isRestrictedInjectionUrl(tabList[tabId].url)) return
 
   if (settings.enabled === false) {
     setDisabledBadge(tabId)
@@ -532,45 +560,71 @@ function doTheMagic(tabId, frameId, anotherTry) {
     return
   }
 
+  // Optional: skip injection if tab was already closed (reduces "frame removed" races)
+  if (isManifestV3) {
+    try {
+      await chrome.tabs.get(tabId)
+    } catch {
+      return
+    }
+  }
+
+  const documentId = tabList[tabId]?.documentId
+  const injectionOpts = { tabId, frameId, documentId }
+
   // Common CSS rules
-  insertCSS({ tabId, frameId: frameId || 0, file: 'data/css/common.css' }, function () {
-    // A failure? Retry.
-    if (chrome.runtime.lastError) {
-      console.log(chrome.runtime.lastError)
+  insertCSS(
+    { ...injectionOpts, frameId: frameId || 0, file: 'data/css/common.css' },
+    function (err) {
+      // A failure? Retry (chrome.runtime.lastError or promise rejection passed as err).
+      if (chrome.runtime.lastError || err) {
+        const msg = (err && err.message) || (chrome.runtime.lastError && chrome.runtime.lastError.message) || ''
+        if (isRestrictedPageError(err)) {
+          return
+        }
+        if (msg && !String(msg).includes('was removed')) {
+          console.log(err || chrome.runtime.lastError)
+        }
+        const currentTry = anotherTry || 1
 
-      const currentTry = anotherTry || 1
-
-      if (currentTry == 10) {
+        if (currentTry == 10) {
+          return
+        }
+        if (currentTry > 5) {
+          setTimeout(() => doTheMagic(tabId, frameId || 0, currentTry + 1))
+        } else {
+          doTheMagic(tabId, frameId || 0, currentTry + 1)
+        }
         return
       }
-      if (currentTry > 5) {
-        setTimeout(() => doTheMagic(tabId, frameId || 0, currentTry + 1))
-      } else {
-        doTheMagic(tabId, frameId || 0, currentTry + 1)
+
+      // Common social embeds
+      executeScript({ ...injectionOpts, file: 'data/js/embedsHandler.js' })
+
+      if (activateDomain(tabList[tabId].hostname, tabId, frameId || 0, documentId)) {
+        return
       }
-      return
-    }
 
-    // Common social embeds
-    executeScript({ tabId, frameId, file: 'data/js/embedsHandler.js' })
-
-    if (activateDomain(tabList[tabId].hostname, tabId, frameId || 0)) {
-      return
-    }
-
-    for (const level in tabList[tabId].host_levels) {
-      if (activateDomain(tabList[tabId].host_levels[level], tabId, frameId || 0)) {
-        return true
+      for (const level in tabList[tabId].host_levels) {
+        if (
+          activateDomain(
+            tabList[tabId].host_levels[level],
+            tabId,
+            frameId || 0,
+            documentId,
+          )
+        ) {
+          return true
+        }
       }
-    }
 
-    // Common JS rules when custom rules don't exist
-    executeScript({
-      tabId,
-      frameId,
-      file: 'data/js/0_defaultClickHandler.js',
-    })
-  })
+      // Common JS rules when custom rules don't exist
+      executeScript({
+        ...injectionOpts,
+        file: 'data/js/0_defaultClickHandler.js',
+      })
+    },
+  )
 }
 
 chrome.webNavigation.onCommitted.addListener(async (tab) => {
@@ -612,13 +666,19 @@ chrome.runtime.onMessage.addListener((request, info, sendResponse) => {
           sendResponse(response)
           responseSend = true
         } else if (request.command == 'toggle_extension') {
-          toggleWhitelist(tabList[request.tabId])
-          executeScript({
-            tabId: request.tabId,
-            func: () => {
-              window.location.reload()
-            },
-          })
+          const tab = tabList[request.tabId]
+          if (!tab.url || tab.url.indexOf('http') !== 0) {
+            sendResponse({ error: 'restricted_page' })
+            responseSend = true
+          } else {
+            toggleWhitelist(tab)
+            executeScript({
+              tabId: request.tabId,
+              func: () => {
+                window.location.reload()
+              },
+            })
+          }
         } else if (request.command == 'report_website') {
           reportWebsite(
             info,
@@ -630,12 +690,18 @@ chrome.runtime.onMessage.addListener((request, info, sendResponse) => {
           )
           responseSend = true
         } else if (request.command == 'refresh_page') {
-          executeScript({
-            tabId: request.tabId,
-            func: () => {
-              window.location.reload()
-            },
-          })
+          const tab = tabList[request.tabId]
+          if (!tab.url || tab.url.indexOf('http') !== 0) {
+            sendResponse({ error: 'restricted_page' })
+            responseSend = true
+          } else {
+            executeScript({
+              tabId: request.tabId,
+              func: () => {
+                window.location.reload()
+              },
+            })
+          }
         }
       } else {
         if (request.command == 'cookie_warning_dismissed') {
@@ -657,18 +723,24 @@ chrome.runtime.onMessage.addListener((request, info, sendResponse) => {
 })
 
 function insertCSS(injection, callback) {
-  const { tabId, css, file, frameId } = injection
+  const { tabId, css, file, frameId, documentId } = injection
 
   if (isManifestV3) {
-    chrome.scripting.insertCSS(
-      {
-        target: { tabId: tabId, frameIds: [frameId || 0] },
-        css: css,
-        files: file ? [file] : undefined,
-        origin: 'USER',
-      },
-      callback,
-    )
+    const target =
+      documentId != null && documentId !== ''
+        ? { tabId, documentIds: [documentId] }
+        : { tabId, frameIds: [frameId || 0] }
+    const promise = chrome.scripting.insertCSS({
+      target,
+      css: css,
+      files: file ? [file] : undefined,
+      origin: 'USER',
+    })
+    if (callback) {
+      promise.then(() => callback()).catch((err) => callback(err))
+    } else {
+      promise.catch(() => {})
+    }
   } else {
     chrome.tabs.insertCSS(
       tabId,
@@ -685,17 +757,22 @@ function insertCSS(injection, callback) {
 }
 
 function executeScript(injection, callback) {
-  const { tabId, func, file, frameId } = injection
+  const { tabId, func, file, frameId, documentId } = injection
   if (isManifestV3) {
-    // manifest v3
-    chrome.scripting.executeScript(
-      {
-        target: { tabId, frameIds: [frameId || 0] },
-        files: file ? [file] : undefined,
-        func,
-      },
-      callback,
-    )
+    const target =
+      documentId != null && documentId !== ''
+        ? { tabId, documentIds: [documentId] }
+        : { tabId, frameIds: [frameId || 0] }
+    const promise = chrome.scripting.executeScript({
+      target,
+      files: file ? [file] : undefined,
+      func,
+    })
+    if (callback) {
+      promise.then(() => callback()).catch((err) => callback(err))
+    } else {
+      promise.catch(() => {})
+    }
   } else {
     // manifest v2
     chrome.tabs.executeScript(
