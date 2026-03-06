@@ -23,10 +23,16 @@ function showRestrictedPageMessage() {
 }
 
 protectionToggle.addEventListener('change', function () {
-  chrome.storage.local.get(['settings'], (result) => {
+  chrome.storage.sync.get(['settings'], (result) => {
     const settings = result.settings || {}
     settings.enabled = protectionToggle.checked
-    chrome.storage.local.set({ settings }, () => {
+    chrome.storage.sync.set({ settings }, () => {
+      if (chrome.runtime.lastError) {
+        console.error('Storage sync failed:', chrome.runtime.lastError.message)
+        protectionToggle.checked = !settings.enabled
+        applyEnabledUI(!settings.enabled)
+        return
+      }
       chrome.runtime.sendMessage('update_settings')
       applyEnabledUI(settings.enabled)
     })
@@ -124,7 +130,7 @@ function reloadMenu(enableRefreshButton) {
         applyEnabledUI(enabled)
 
         // Apply dark mode from stored settings
-        chrome.storage.local.get({ settings: { darkMode: false } }, ({ settings }) => {
+        chrome.storage.sync.get({ settings: { darkMode: false } }, ({ settings }) => {
           document.documentElement.classList.toggle('dark', settings.darkMode)
         })
 
@@ -182,7 +188,7 @@ function switchMenu(id) {
   }
 }
 
-chrome.storage?.local?.get({ settings: { darkMode: false } }, ({ settings }) => {
+chrome.storage?.sync?.get({ settings: { darkMode: false } }, ({ settings }) => {
   if (settings?.darkMode) document.documentElement.classList.add('dark')
 })
 

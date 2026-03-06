@@ -844,38 +844,40 @@ function getE(hostname) {
   return false;
 }
 
-const hostname = document.location.hostname.replace(/^w{2,3}\d*\./i, "");
-const cookies = getE(hostname);
-if (cookies) {
-  let counter = 0;
+(function () {
+  const hostname = document.location.hostname.replace(/^w{2,3}\d*\./i, "");
+  const cookies = getE(hostname);
+  if (cookies) {
+    let counter = 0;
 
-  cookies.forEach(function (cookie) {
-    cookie = cookie.split("=");
-    const parts = ("; " + document.cookie).split("; " + cookie[0] + "=");
+    cookies.forEach(function (cookie) {
+      cookie = cookie.split("=");
+      const parts = ("; " + document.cookie).split("; " + cookie[0] + "=");
 
-    if (parts.length < 2 || parts[1].split(";")[0] != cookie[1]) {
-      // First try to delete the cookie
+      if (parts.length < 2 || parts[1].split(";")[0] != cookie[1]) {
+        // First try to delete the cookie
 
-      if (parts.length > 1) {
-        const domainParts = hostname.split(".");
+        if (parts.length > 1) {
+          const domainParts = hostname.split(".");
 
-        while (domainParts.length > 1) {
-          document.cookie =
-            cookie[0] +
-            "=; domain=" +
-            domainParts.join(".") +
-            "; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-          domainParts.shift();
+          while (domainParts.length > 1) {
+            document.cookie =
+              cookie[0] +
+              "=; domain=" +
+              domainParts.join(".") +
+              "; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+            domainParts.shift();
+          }
         }
+
+        document.cookie = cookie[0] + "=" + cookie[1];
+        counter++;
       }
+    });
 
-      document.cookie = cookie[0] + "=" + cookie[1];
-      counter++;
+    // Reload if cookies are enabled
+    if (counter > 0 && document.cookie.length > 0) {
+      document.location.reload();
     }
-  });
-
-  // Reload if cookies are enabled
-  if (counter > 0 && document.cookie.length > 0) {
-    document.location.reload();
   }
-}
+})();

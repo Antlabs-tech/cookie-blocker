@@ -324,21 +324,23 @@ function getItem(hostname) {
   return false;
 }
 
-const hostname = document.location.hostname.replace(/^w{2,3}\d*\./i, "");
-let counter = 0;
-const items = getItem(hostname);
+(function () {
+  const hostname = document.location.hostname.replace(/^w{2,3}\d*\./i, "");
+  let counter = 0;
+  const items = getItem(hostname);
 
-if (items) {
-  (items instanceof Array ? items : [items]).forEach(function (item) {
-    const value = localStorage.getItem(item.key);
+  if (items) {
+    (items instanceof Array ? items : [items]).forEach(function (item) {
+      const value = localStorage.getItem(item.key);
 
-    if (value == null || (item.strict && value != item.value)) {
-      localStorage.setItem(item.key, item.value);
-      counter++;
+      if (value == null || (item.strict && value != item.value)) {
+        localStorage.setItem(item.key, item.value);
+        counter++;
+      }
+    });
+
+    if (counter > 0) {
+      document.location.reload();
     }
-  });
-
-  if (counter > 0) {
-    document.location.reload();
   }
-}
+})();

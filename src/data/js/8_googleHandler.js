@@ -9,11 +9,11 @@
   const readLocalStorage = async (key) => {
     return new Promise((resolve) => {
       try {
-        if (!chrome?.storage?.local) {
+        if (!chrome?.storage?.sync) {
           resolve(undefined)
           return
         }
-        chrome.storage.local.get([key], function (result) {
+        chrome.storage.sync.get([key], function (result) {
           try {
             if (chrome.runtime?.id === undefined) {
               resolve(undefined)

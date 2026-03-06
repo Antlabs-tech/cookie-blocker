@@ -12,6 +12,7 @@
                 third argument is the chain as array if condition selector isn't found
 */
 
+(function () {
 const classname = Math.random()
   .toString(36)
   .replace(/[^a-z]+/g, "");
@@ -8513,4 +8514,5 @@ function searchLoop(counter, host) {
 
     clearInterval(start);
   }, 200);
+})();
 })();

@@ -80,7 +80,7 @@ function updateSettings() {
   return new Promise((resolve) => {
     lastDeclarativeNetRuleId = 1
 
-    chrome.storage.local.get(
+    chrome.storage.sync.get(
       {
         settings: {
           enabled: true,
@@ -175,7 +175,11 @@ async function toggleWhitelist(tab) {
   } else {
     settings.whitelistedDomains[tabList[tab.id].hostname] = true
   }
-  chrome.storage.local.set({ settings }, function () {
+  chrome.storage.sync.set({ settings }, function () {
+    if (chrome.runtime.lastError) {
+      console.warn('Storage sync failed (e.g. quota):', chrome.runtime.lastError.message)
+      return
+    }
     for (const i in tabList) {
       if (tabList[i].hostname == tabList[tab.id].hostname) {
         tabList[i].whitelisted = !tabList[tab.id].whitelisted

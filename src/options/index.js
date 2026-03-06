@@ -14,7 +14,7 @@ function saveOptions() {
   const whitelist = document.getElementById('whitelist').value.split('\n')
   const defaultActionEl = document.querySelector('input[name="default_action"]:checked')
 
-  chrome.storage.local.get({ settings: defaultSettings }, (result) => {
+  chrome.storage.sync.get({ settings: defaultSettings }, (result) => {
     const settings = {
       ...result.settings,
       whitelistedDomains: {},
@@ -36,20 +36,30 @@ function saveOptions() {
       }
     })
 
-    chrome.storage.local.set({ settings }, () => {
-      document.getElementById('status_saved').style.display = 'inline'
-
+    chrome.storage.sync.set({ settings }, () => {
+      const statusEl = document.getElementById('status_saved')
+      if (chrome.runtime.lastError) {
+        const msg = chrome.runtime.lastError.message || ''
+        const isQuota = /quota|QUOTA/i.test(msg)
+        statusEl.textContent = isQuota
+          ? 'Sync quota exceeded. Try fewer whitelisted domains.'
+          : `Save failed: ${msg}`
+        statusEl.style.display = 'inline'
+        setTimeout(() => { statusEl.style.display = 'none' }, 5000)
+        return
+      }
+      statusEl.textContent = 'Saved successfully'
+      statusEl.style.display = 'inline'
       setTimeout(function () {
-        document.getElementById('status_saved').style.display = 'none'
+        statusEl.style.display = 'none'
       }, 2000)
-
       chrome.runtime.sendMessage('update_settings')
     })
   })
 }
 
 function restoreOptions() {
-  chrome.storage.local.get({ settings: defaultSettings }, ({ settings }) => {
+  chrome.storage.sync.get({ settings: defaultSettings }, ({ settings }) => {
     document.getElementById('whitelist').value = Object.keys(settings.whitelistedDomains)
       .sort()
       .join('\n')
@@ -73,6 +83,6 @@ document.getElementById('dark_mode').addEventListener('change', (e) => {
   saveOptions()
 })
 
-chrome.storage?.local?.get({ settings: { darkMode: false } }, ({ settings }) => {
+chrome.storage?.sync?.get({ settings: { darkMode: false } }, ({ settings }) => {
   if (settings?.darkMode) document.documentElement.classList.add('dark')
 })

@@ -17,14 +17,16 @@ function getItem(hostname) {
   return false;
 }
 
-const hostname = document.location.hostname.replace(/^w{2,3}\d*\./i, "");
-const item = getItem(hostname);
+(function () {
+  const hostname = document.location.hostname.replace(/^w{2,3}\d*\./i, "");
+  const item = getItem(hostname);
 
-if (item) {
-  const value = sessionStorage.getItem(item.key);
+  if (item) {
+    const value = sessionStorage.getItem(item.key);
 
-  if (value == null || (item.strict && value != item.value)) {
-    sessionStorage.setItem(item.key, item.value);
-    document.location.reload();
+    if (value == null || (item.strict && value != item.value)) {
+      sessionStorage.setItem(item.key, item.value);
+      document.location.reload();
+    }
   }
-}
+})();
