@@ -43,6 +43,82 @@
     '.onetrust-pc-dark-filter:not([class*="hide"]):not([style*="none"]) + #onetrust-banner-sdk #onetrust-button-group-parent #onetrust-pc-btn-handler',
     '.onetrust-pc-dark-filter:not([class*="hide"]):not([style*="none"]) ~ #onetrust-pc-sdk .onetrust-close-btn-handler:first-child',
   ]
+  const usercentricsReject = [
+    'div[data-testid="uc-buttons-container"] > button:first-child',
+    'div[data-testid="first-line-buttons"] > button:first-child',
+  ]
+  const usercentricsAccept = [
+    'div[data-testid="uc-buttons-container"] > button:nth-child(2)',
+    'div[data-testid="first-line-buttons"] > button:nth-child(2)',
+  ]
+  const sourcepointReject = [
+    'button.sp_choice_type_12:not(.cmp-no-pur-privacy-btn)',
+    '.sp_choice_type_SAVE_AND_EXIT',
+  ]
+  const sourcepointAccept = [
+    'div:not(.header) > .sp_choice_type_11:only-of-type:not(:only-child)',
+    '#notice > div:nth-child(3) .message-column:first-child:not(:only-child) .sp_choice_type_11',
+    '.sp_choice_type_11.button-responsive-primary',
+    '.sp_choice_type_13',
+  ]
+  const ccReject = [
+    '.cc-dismiss',
+    '.cc-btn--reject',
+    '.cc-privacy-settings .cc-privacy-settings-compliance:last-child .cc-btn',
+  ]
+  const ccAccept = [
+    '.cc-checkboxes-container .cc-allow',
+    '.cc-privacy-settings .cc-privacy-settings-compliance:last-child .cc-btn',
+    '.accept-as-is',
+  ]
+  const tealiumModalReject = [
+    '#privacy_pref_optin',
+    '#consent_prompt_preferences',
+    '#consent_prompt_submit',
+    '.container-cookie-modal-footer-refuse',
+    '.cl-btn--reject-all',
+  ]
+  const tealiumModalAccept = [
+    '.cl-btn--accept-all',
+    '.container-cookie-modal-footer-accept',
+    '#consent_prompt_submit',
+  ]
+  const tealiumPrefsReject = [
+    '#privacy_prompt[style*="block"] #preferences_prompt_decline',
+    '.consent-manager[style*="block"] #cm-acceptNone',
+    '.consent-manager[style*="block"] #consent_wall_optout',
+    '.tiq_cm[style*="block"] #deny_full_submit_1',
+    '#preferences_prompt_submit',
+  ]
+  const tealiumPrefsAccept = [
+    '.consent-manager[style*="block"] #cm-acceptAll',
+    '#preferences_prompt_submit',
+  ]
+  const fancyboxLockReject = [
+    '.fancybox-opened .bcGDPR .bcOpenPrivacySettings',
+    '.fancybox-opened .bcGDPR .bcRadioRefuse',
+    '.fancybox-opened .bcGDPR #bcSubmitConsent',
+    '.fancybox-opened .bcGDPR .bcpConsentCancelButton',
+    '.fancybox-opened.cookie-gdpr-wrap .btn[data-action="deny-all"]',
+    '.fancybox-opened #cookie-consent button[data-accept="minimum"]',
+  ]
+  const fancyboxLockAccept = [
+    '.fancybox-opened .bcGDPR .bcOpenPrivacySettings',
+    '.fancybox-opened .bcGDPR .bcRadioAccept',
+    '.fancybox-opened .bcGDPR #bcSubmitConsent',
+    '.fancybox-opened.cookie-gdpr-wrap .btn[data-action="accept-all"]',
+    '.fancybox-opened #cookie-consent button[data-accept="all"]',
+  ]
+  const fancyboxIsOpenReject = [
+    '#acceptCookiesId[style*="block"] .cookieDecline',
+    '#cookies-modal-id[style*="block"] .js-decline',
+  ]
+  const fancyboxIsOpenAccept = [
+    '#cookie-consent .cc-page-2 #cc-set-cookie',
+    '.consent-modal .btn[data-action="save-preferences"]',
+    '#acceptCookiesId[style*="block"] .cookieDecline',
+    '#cookies-modal-id[style*="block"] .js-decline',
+  ]
   const searchPairs = {
     '.if6_eprivacy': [".ebutton > a[data-form*='eprivacy_optin_decline']"],
 
@@ -51,21 +127,11 @@
       'a[data-order]:nth-child(2) span',
     ],
 
-    '#usercentrics-root': [
-      'div[data-testid="uc-buttons-container"] > button:first-child',
-      'div[data-testid="first-line-buttons"] > button:first-child',
-    ],
+    '#usercentrics-root': wantReject ? usercentricsReject : usercentricsAccept,
 
     '#onetrust-consent-sdk': wantReject ? onetrustReject : onetrustAccept,
 
-    '.message-container': [
-      'button.sp_choice_type_12:not(.cmp-no-pur-privacy-btn)',
-      '.sp_choice_type_SAVE_AND_EXIT',
-      'div:not(.header) > .sp_choice_type_11:only-of-type:not(:only-child)',
-      '#notice > div:nth-child(3) .message-column:first-child:not(:only-child) .sp_choice_type_11',
-      '.sp_choice_type_11.button-responsive-primary',
-      '.sp_choice_type_13',
-    ],
+    '.message-container': wantReject ? sourcepointReject : sourcepointAccept,
 
     '.mfp-wrap.mfp-ready': [
       '.cookiebanner-section .js-banner-button-confirm-selection',
@@ -88,44 +154,15 @@
       '#cookies #c-deny',
     ],
 
-    '.cc-window:not(.cc-invisible)': [
-      '.cc-checkboxes-container .cc-allow',
-      '.cc-privacy-settings .cc-privacy-settings-compliance:last-child .cc-btn',
-      '.accept-as-is',
-    ],
+    '.cc-window:not(.cc-invisible)': wantReject ? ccReject : ccAccept,
 
-    '#__tealiumGDPRecModal': [
-      '#privacy_pref_optin',
-      '#consent_prompt_preferences',
-      '#consent_prompt_submit',
-      '.container-cookie-modal-footer-refuse',
-      '.cl-btn--reject-all',
-    ],
+    '#__tealiumGDPRecModal': wantReject ? tealiumModalReject : tealiumModalAccept,
 
-    '#__tealiumGDPRcpPrefs': [
-      '#privacy_prompt[style*="block"] #preferences_prompt_decline',
-      '.consent-manager[style*="block"] #cm-acceptNone',
-      '.consent-manager[style*="block"] #consent_wall_optout',
-      '.tiq_cm[style*="block"] #deny_full_submit_1',
-      '#preferences_prompt_submit',
-    ],
+    '#__tealiumGDPRcpPrefs': wantReject ? tealiumPrefsReject : tealiumPrefsAccept,
 
-    '.fancybox-lock': [
-      '.fancybox-opened .bcGDPR .bcOpenPrivacySettings',
-      '.fancybox-opened .bcGDPR .bcRadioRefuse',
-      '.fancybox-opened .bcGDPR #bcSubmitConsent',
-      '.fancybox-opened .bcGDPR .bcpConsentCancelButton',
+    '.fancybox-lock': wantReject ? fancyboxLockReject : fancyboxLockAccept,
 
-      '.fancybox-opened.cookie-gdpr-wrap .btn[data-action="deny-all"]',
-      '.fancybox-opened #cookie-consent button[data-accept="minimum"]',
-    ],
-
-    '.fancybox-is-open': [
-      '#cookie-consent .cc-page-2 #cc-set-cookie',
-      '.consent-modal .btn[data-action="save-preferences"]',
-      '#acceptCookiesId[style*="block"] .cookieDecline',
-      '#cookies-modal-id[style*="block"] .js-decline',
-    ],
+    '.fancybox-is-open': wantReject ? fancyboxIsOpenReject : fancyboxIsOpenAccept,
 
     '.pum-open': [
       '.pum-active[data-popmake*="slug\\":\\"cookie"] .pum-close',
@@ -239,19 +276,26 @@
     ],
   }
 
-  const searchGroups = [
+  const searchGroupsReject = [
     '.qc-cmp2-summary-buttons button#disagree-btn,\
 		.qc-cmp2-summary-buttons:not(:has(#disagree-btn)) #more-options-btn,\
 		.qc-cmp2-summary-buttons:not(:has(#disagree-btn)):not(:has(#more-options-btn)) button[mode="secondary"],\
 		.qc-cmp2-buttons-desktop > button:first-child,\
-		#didomi-popup .didomi-button-highlight:not([class*="paywall"]):not([class*="disagree"]),\
+		#didomi-popup .didomi-button-disagree,\
+		.lightbox.cookie-consent .cookie-consent-button-decline,\
+		#root main ~ div [data-gi-selector="reject-all-cookies"] ~ div a,\
+		.cookies-management .cookies-deny,\
+		.modal #cookiewarning .button--decline,\
+		.wcc-consent-container .wcc-btn-reject',
+  ]
+  const searchGroupsAccept = [
+    '#didomi-popup .didomi-button-highlight:not([class*="paywall"]):not([class*="disagree"]),\
 		#rgpd_video .rgpd-mask a[data-rgpd-consent],\
 		.js--modal[style*="block"] .cookie-permission--accept-button,\
 		.gdpr-modal-rider .btn-cookieaccept,\
 		.js-cookiewall #sel-test-accept-cookies-button,\
 		#mpo[style*="block"] .submit.modal-privacy__btn[onclick*="privacyframe.accept"],\
 		.lightbox--cookie-consent .btn-cta,\
-		.lightbox.cookie-consent .cookie-consent-button-decline,\
 		.js-modal-gdpr.is-active .btn[data-level="2"],\
 		#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowallSelection,\
 		#cookieNotificationModal.in .btn.accept-cookie,\
@@ -328,10 +372,7 @@
 		#consent-modal[style*="block"] .lm_modal__modal__content__body__buttons__ok,\
 		.cookiesOverlay3Box #cookiesConsentOK,\
 		.bemCookieOverlay--activePopup .bemCookieOverlay__btn--save,\
-		#root main ~ div [data-gi-selector="reject-all-cookies"] ~ div a,\
-		.cookies-management .cookies-deny,\
 		#cookieNoticeModal.vrm-reveal[style*="block"] .vrm-reveal__icon--close',
-
     '#cookie-modal.in .btn[onclick*="setCookie"],\
 		div[class^="sp_veil"] + div[id^="sp_message"] > div[class^="sp_message"] > div[id^="sp_message_panel"]:first-child div[class^="sp_choices"] button:not([aria-label]):first-child,\
 		div[class^="sp_veil"] + div[id^="sp_message"] #sp-tabindex-focus + div div[class^="sp_choices"] button[aria-label]:first-child + button,\
@@ -417,7 +458,6 @@
 		.cookie-wall__button button,\
 		#notification-allowCookies button,\
 		#sanoma-consent-accept-button',
-
     '#rodo.in .button[href*="accept"],\
 		#gdpr_popin[style*="block"] .gdpr-agree,\
 		form[action*="cookieservice"] #acceptButton,\
@@ -511,7 +551,6 @@
 		.main-header [data-module="cookie-notice"] .buttons[class*="primary"],\
 		.c-cookie-consent form[name="cookie-consent"] input[type="submit"],\
 		.c-cookie-consent .c-cookie-consent__button',
-
     '.fancybox-overlay[style*="block"] #cookie-consent-simple .cookie__btn--primary,\
 		ab-cookie-wall modal-footer .btn,\
 		.cookie-policy-popup[style*="block"] .button[data-cookie-policy-accept],\
@@ -537,6 +576,9 @@
 		div.consents .consents__wrapper .consents__modal .consents__buttons .js__accept-necessary,\
 		.wcc-consent-container .wcc-btn-reject',
   ]
+    const searchGroups = wantReject
+      ? searchGroupsReject.concat(searchGroupsAccept)
+      : searchGroupsAccept.concat(searchGroupsReject)
 
   // Search loop function
 
