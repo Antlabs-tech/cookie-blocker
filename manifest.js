@@ -18,7 +18,6 @@ export default defineManifest({
   permissions: [
     'tabs',
     'storage',
-    'notifications',
     'webRequest',
     'declarativeNetRequestWithHostAccess',
     'webNavigation',

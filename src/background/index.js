@@ -411,15 +411,16 @@ function reportWebsite(info, tab, anon, issueType, notes, callback) {
     return
   }
 
-  if (tabList[tab.id].whitelisted) {
-    return chrome.notifications.create('report', {
-      type: 'basic',
-      title: `Extension is disabled on ${hostname}`,
-      message:
-        'You have disabled the extension on this website. Please enable it and check if you see the cookie warning before reporting.',
-      iconUrl: '../img/logo-48.png',
-    })
-  }
+  // TODO Notify user that the extension is disabled on the website when reporting
+  // if (tabList[tab.id].whitelisted) {
+  //   return chrome.notifications.create('report', {
+  //     type: 'basic',
+  //     title: `Extension is disabled on ${hostname}`,
+  //     message:
+  //       'You have disabled the extension on this website. Please enable it and check if you see the cookie warning before reporting.',
+  //     iconUrl: '../img/logo-48.png',
+  //   })
+  // }
   if (!anon) {
     chrome.tabs.create({
       url: `https://github.com/OhMyGuus/I-Dont-Care-About-Cookies/issues/new?assignees=OhMyGuus&labels=Website+request&template=website_request.yml&title=%5BREQ%5D%3A+${encodeURIComponent(
