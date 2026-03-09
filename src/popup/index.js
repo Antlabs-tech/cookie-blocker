@@ -188,8 +188,42 @@ function switchMenu(id) {
   }
 }
 
+const RATING_STORAGE_KEY = 'userRating'
+
+function restoreRating() {
+  chrome.storage.local.get([RATING_STORAGE_KEY], (result) => {
+    const rating = result[RATING_STORAGE_KEY]
+    if (typeof rating === 'number' && rating >= 1 && rating <= 5) {
+      const radio = document.getElementById(`fst-${rating}`)
+      if (radio) radio.checked = true
+    }
+  })
+}
+
+function initRatingLinks() {
+  document.querySelectorAll('.full-stars .rating-group label a').forEach((anchor) => {
+    anchor.addEventListener('click', (e) => {
+      e.preventDefault()
+      const label = anchor.closest('label')
+      const forId = label?.getAttribute('for')
+      const rating = forId ? parseInt(forId.replace('fst-', ''), 10) : NaN
+      if (rating >= 1 && rating <= 5) {
+        chrome.storage.local.set({ [RATING_STORAGE_KEY]: rating }, () => {
+          const radio = document.getElementById(`fst-${rating}`)
+          if (radio) radio.checked = true
+          if (anchor.href) window.open(anchor.href, '_blank', 'noopener,noreferrer')
+        })
+      } else if (anchor.href) {
+        window.open(anchor.href, '_blank', 'noopener,noreferrer')
+      }
+    })
+  })
+}
+
 chrome.storage?.sync?.get({ settings: { darkMode: false } }, ({ settings }) => {
   if (settings?.darkMode) document.documentElement.classList.add('dark')
 })
 
+initRatingLinks()
+restoreRating()
 reloadMenu()

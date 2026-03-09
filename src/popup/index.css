@@ -1,4 +1,4 @@
-@import "../tailwind.css";
+@import '../tailwind.css';
 
 /* body {
   -moz-user-select: none;
@@ -51,11 +51,11 @@ h3 {
 }
 
 #report_issue_type,
-label[id*="issue_description"] {
+label[id*='issue_description'] {
   margin-bottom: 5px;
 }
 
-label[id*="issue_description"] {
+label[id*='issue_description'] {
   color: rgb(43, 43, 43);
   font-style: italic;
   display: none;
@@ -70,4 +70,35 @@ label#general_issue_description {
   min-width: 100%;
   max-width: 100%;
   margin-bottom: 5px;
+}
+
+.full-stars {
+  text-align: center;
+}
+.full-stars .rating-group {
+  display: inline-flex;
+}
+.full-stars input {
+  position: absolute;
+  left: -9999px;
+}
+.full-stars label {
+  margin: 0;
+  cursor: pointer;
+}
+.full-stars label a svg {
+  margin: 2px;
+  height: 20px;
+  width: 20px;
+  fill: #FDCC0D;
+  transition: fill 0.3s;
+}
+.full-stars input:checked ~ label a svg {
+  fill: #D3D3D3;
+}
+.full-stars .rating-group:hover label a svg {
+  fill: #FDCC0D;
+}
+.full-stars .rating-group input:hover ~ label a svg {
+  fill: #D3D3D3;
 }
