@@ -87,6 +87,14 @@ options.addEventListener('click', function () {
   window.close()
 })
 
+if (report) {
+  report.addEventListener('click', function () {
+    chrome.runtime.sendMessage({ command: 'open_report_form', tabId: currentTab?.id }, () =>
+      window.close(),
+    )
+  })
+}
+
 document
   .getElementById('error_back_button')
   .addEventListener('click', () => switchMenu('menu_main'))
@@ -153,6 +161,11 @@ function reloadMenu(enableRefreshButton) {
         } else if (enabled) {
           toggle.querySelector('p').textContent = ''
           toggle.style.display = 'none'
+        }
+
+        if (report) {
+          const isRestrictedPage = message?.tab && !message?.tab?.hostname
+          report.style.display = enabled && !isRestrictedPage ? '' : 'none'
         }
 
         if (typeof enableRefreshButton != 'undefined' && enabled) {

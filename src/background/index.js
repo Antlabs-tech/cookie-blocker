@@ -415,16 +415,6 @@ function reportWebsite(info, tab, anon, issueType, notes, callback) {
     return
   }
 
-  // TODO Notify user that the extension is disabled on the website when reporting
-  // if (tabList[tab.id].whitelisted) {
-  //   return chrome.notifications.create('report', {
-  //     type: 'basic',
-  //     title: `Extension is disabled on ${hostname}`,
-  //     message:
-  //       'You have disabled the extension on this website. Please enable it and check if you see the cookie warning before reporting.',
-  //     iconUrl: '../img/logo-48.png',
-  //   })
-  // }
   if (!anon) {
     chrome.tabs.create({
       url: `https://github.com/OhMyGuus/I-Dont-Care-About-Cookies/issues/new?assignees=OhMyGuus&labels=Website+request&template=website_request.yml&title=%5BREQ%5D%3A+${encodeURIComponent(
@@ -660,7 +650,30 @@ chrome.runtime.onMessage.addListener((request, info, sendResponse) => {
   initialize().then(() => {
     let responseSend = false
     if (typeof request == 'object') {
-      if (request.tabId && tabList[request.tabId]) {
+      if (request.command == 'open_report_form') {
+        const tab = request.tabId && tabList[request.tabId] ? tabList[request.tabId] : null
+        const hasValidTab = tab && tab.url && tab.url.indexOf('http') === 0
+        const url = hasValidTab ? tab.hostname || tab.url : 'N/A'
+        const browser = getBrowserAndVersion()
+        const version = chrome.runtime.getManifest().version
+        const language = navigator.language || Intl.DateTimeFormat().resolvedOptions().locale
+        const whitelisted = hasValidTab ? (tab.whitelisted === true ? 'yes' : 'no') : 'N/A'
+        const technicalDetails = [
+          `URL: ${url}`,
+          `Browser: ${browser}`,
+          `Extension version: ${version}`,
+          `Language: ${language}`,
+          `Whitelisted on this site: ${whitelisted}`,
+        ].join('\n')
+        const baseFormUrl =
+          'https://docs.google.com/forms/d/e/1FAIpQLScmpumM-4UkK7MtuIYbUxC23KuxLg_b47SwH_xol_TFN4Lw4A/viewform?usp=pp_url'
+        const formUrl = `${baseFormUrl}&entry.184878854=${encodeURIComponent(
+          technicalDetails,
+        )}&entry.1809056120=General+issue`
+        chrome.tabs.create({ url: formUrl })
+        sendResponse({ ok: true })
+        responseSend = true
+      } else if (request.tabId && tabList[request.tabId]) {
         if (request.command == 'get_active_tab') {
           const response = { tab: tabList[request.tabId], enabled: settings.enabled !== false }
           response.dismissedCount = dismissedCountByTabId[request.tabId] || 0

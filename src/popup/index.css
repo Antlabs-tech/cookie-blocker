@@ -23,8 +23,7 @@ a[id] {
 a[id]:hover {
   background-color: #ccc;
 }
-#toggle,
-#report {
+#toggle {
   display: none;
 }
 #refresh {
