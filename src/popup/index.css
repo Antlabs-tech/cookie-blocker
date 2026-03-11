@@ -101,3 +101,8 @@ label#general_issue_description {
 .full-stars .rating-group input:hover ~ label a svg {
   fill: #D3D3D3;
 }
+
+/* Dark mode star overrides */
+.dark .full-stars input:checked ~ label a svg {
+  fill: #475569;
+}

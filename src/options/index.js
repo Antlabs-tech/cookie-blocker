@@ -74,7 +74,11 @@ function restoreOptions() {
 document.getElementById('save').setAttribute('value', 'Save settings')
 document.getElementById('status_saved').textContent = 'Saved successfully'
 
-document.addEventListener('DOMContentLoaded', restoreOptions)
+document.addEventListener('DOMContentLoaded', () => {
+  restoreOptions()
+  const versionEl = document.getElementById('app-version')
+  if (versionEl) versionEl.textContent = `v${__APP_VERSION__}`
+})
 document.getElementById('save').addEventListener('click', saveOptions)
 
 // Apply dark mode instantly on toggle (no need to wait for Save)

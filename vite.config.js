@@ -3,8 +3,12 @@ import tailwindcss from '@tailwindcss/vite'
 import { crx } from '@crxjs/vite-plugin'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 import manifest from './manifest.js'
+import packageJson from './package.json' assert { type: 'json' }
 
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(packageJson.version),
+  },
   build: {
     emptyOutDir: true,
     outDir: 'build',
