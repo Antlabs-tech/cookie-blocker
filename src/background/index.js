@@ -12,6 +12,7 @@ let settings = {
   defaultAction: 'reject',
   darkMode: false,
 }
+let globalWhitelist = {}
 const isManifestV3 = chrome.runtime.getManifest().manifest_version == 3
 const dismissedCountByTabId = {}
 
@@ -136,6 +137,20 @@ async function updateWhitelistRules() {
   })
 }
 
+async function loadAndSetGlobalWhitelist() {
+  try {
+    const res = await fetch(chrome.runtime.getURL('data/js/whitelist.json'))
+    if (!res.ok) return
+    const domains = await res.json()
+    globalWhitelist = {}
+    for (const domain of domains) {
+      globalWhitelist[domain] = true
+    }
+  } catch {
+    // Bundled whitelist not available
+  }
+}
+
 function isWhitelisted(tab) {
   if (typeof settings.whitelistedDomains[tab.hostname] != 'undefined') {
     return true
@@ -143,6 +158,17 @@ function isWhitelisted(tab) {
 
   for (const i in tab.host_levels) {
     if (typeof settings.whitelistedDomains[tab.host_levels[i]] != 'undefined') {
+      return true
+    }
+  }
+
+  // Check global whitelist (managed by extension releases)
+  if (typeof globalWhitelist[tab.hostname] != 'undefined') {
+    return true
+  }
+
+  for (const i in tab.host_levels) {
+    if (typeof globalWhitelist[tab.host_levels[i]] != 'undefined') {
       return true
     }
   }
@@ -485,9 +511,7 @@ function isRestrictedInjectionUrl(url) {
 
 function isRestrictedPageError(err) {
   const msg =
-    (err && err.message) ||
-    (chrome.runtime.lastError && chrome.runtime.lastError.message) ||
-    ''
+    (err && err.message) || (chrome.runtime.lastError && chrome.runtime.lastError.message) || ''
   return (
     typeof msg === 'string' &&
     (msg.includes('Cannot access contents') ||
@@ -573,7 +597,10 @@ async function doTheMagic(tabId, frameId, anotherTry) {
     function (err) {
       // A failure? Retry (chrome.runtime.lastError or promise rejection passed as err).
       if (chrome.runtime.lastError || err) {
-        const msg = (err && err.message) || (chrome.runtime.lastError && chrome.runtime.lastError.message) || ''
+        const msg =
+          (err && err.message) ||
+          (chrome.runtime.lastError && chrome.runtime.lastError.message) ||
+          ''
         if (isRestrictedPageError(err)) {
           return
         }
@@ -601,14 +628,7 @@ async function doTheMagic(tabId, frameId, anotherTry) {
       }
 
       for (const level in tabList[tabId].host_levels) {
-        if (
-          activateDomain(
-            tabList[tabId].host_levels[level],
-            tabId,
-            frameId || 0,
-            documentId,
-          )
-        ) {
+        if (activateDomain(tabList[tabId].host_levels[level], tabId, frameId || 0, documentId)) {
           return true
         }
       }
@@ -817,6 +837,7 @@ async function initialize(checkInitialized, magic) {
   }
   loadCachedRules()
   await updateSettings()
+  await loadAndSetGlobalWhitelist()
   await recreateTabList(magic)
   initialized = true
 }

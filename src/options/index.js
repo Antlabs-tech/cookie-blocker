@@ -45,7 +45,9 @@ function saveOptions() {
           ? 'Sync quota exceeded. Try fewer whitelisted domains.'
           : `Save failed: ${msg}`
         statusEl.style.display = 'inline'
-        setTimeout(() => { statusEl.style.display = 'none' }, 5000)
+        setTimeout(() => {
+          statusEl.style.display = 'none'
+        }, 5000)
         return
       }
       statusEl.textContent = 'Saved successfully'
