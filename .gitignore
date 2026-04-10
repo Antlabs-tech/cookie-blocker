@@ -4,3 +4,5 @@ build/
 .DS_Store
 _metadata/
 banners-and-icons/
+.env
+scripts/extracted-data
