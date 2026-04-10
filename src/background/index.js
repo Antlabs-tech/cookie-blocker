@@ -176,6 +176,20 @@ function isWhitelisted(tab) {
   return false
 }
 
+function isGlobalWhitelisted(tab) {
+  if (typeof globalWhitelist[tab.hostname] != 'undefined') {
+    return true
+  }
+
+  for (const i in tab.host_levels) {
+    if (typeof globalWhitelist[tab.host_levels[i]] != 'undefined') {
+      return true
+    }
+  }
+
+  return false
+}
+
 function getWhitelistedDomain(tab) {
   if (typeof settings.whitelistedDomains[tab.hostname] != 'undefined') {
     return tab.hostname
@@ -183,6 +197,17 @@ function getWhitelistedDomain(tab) {
 
   for (const i in tab.host_levels) {
     if (typeof settings.whitelistedDomains[tab.host_levels[i]] != 'undefined') {
+      return tab.host_levels[i]
+    }
+  }
+
+  // Check global whitelist
+  if (typeof globalWhitelist[tab.hostname] != 'undefined') {
+    return tab.hostname
+  }
+
+  for (const i in tab.host_levels) {
+    if (typeof globalWhitelist[tab.host_levels[i]] != 'undefined') {
       return tab.host_levels[i]
     }
   }
@@ -700,6 +725,7 @@ chrome.runtime.onMessage.addListener((request, info, sendResponse) => {
 
           if (response.tab.whitelisted) {
             response.tab.hostname = getWhitelistedDomain(tabList[request.tabId])
+            response.tab.globalWhitelisted = isGlobalWhitelisted(tabList[request.tabId])
           }
           sendResponse(response)
           responseSend = true

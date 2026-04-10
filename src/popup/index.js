@@ -52,6 +52,7 @@ protectionToggle.addEventListener('change', function () {
 })
 
 toggle.addEventListener('click', function () {
+  if (toggle.disabled) return
   chrome.runtime.sendMessage(
     {
       command: 'toggle_extension',
@@ -143,15 +144,39 @@ function reloadMenu(enableRefreshButton) {
         })
 
         if (enabled && message.tab && message.tab.hostname) {
-          toggle.querySelector('p').textContent = message.tab.whitelisted
-            ? `Resume on this site`
-            : `Pause on this site`
-          toggle.querySelector('#toggle-icon').textContent = message.tab.whitelisted
-            ? 'play_circle'
-            : 'pause_circle'
+          const globalWhitelisted = message.tab.globalWhitelisted === true
+
+          toggle.disabled = globalWhitelisted
+          toggle.style.cursor = globalWhitelisted ? 'not-allowed' : ''
+          toggle.setAttribute('aria-disabled', globalWhitelisted)
+
+          if (message.tab.whitelisted) {
+            toggle.querySelector('#toggle-title').textContent = globalWhitelisted
+              ? `Known issue on this site`
+              : `Resume on this site`
+            toggle.querySelector('#toggle-desc').textContent = globalWhitelisted
+              ? `Will be fixed in next release`
+              : `Temporarily allow all cookies`
+            toggle.querySelector('#toggle-icon').textContent = globalWhitelisted
+              ? 'warning'
+              : 'play_circle'
+          } else {
+            toggle.querySelector('#toggle-title').textContent = `Pause on this site`
+            toggle.querySelector('#toggle-desc').textContent = `Temporarily allow all cookies`
+            toggle.querySelector('#toggle-icon').textContent = 'pause_circle'
+            toggle.disabled = false
+            toggle.style.opacity = ''
+            toggle.style.cursor = ''
+            toggle.removeAttribute('aria-disabled')
+          }
+
+          const hintEl = document.getElementById('global-whitelist-hint')
+          if (hintEl) {
+            hintEl.classList.toggle('hidden', !globalWhitelisted || !message.tab.whitelisted)
+          }
 
           toggle.style.display = 'flex'
-          if (message.tab.whitelisted) {
+          if (message.tab.whitelisted && !globalWhitelisted) {
             statsLineContainer.style.display = 'none'
             protectionOffHint.classList.toggle('hidden', false)
           } else {
@@ -159,8 +184,12 @@ function reloadMenu(enableRefreshButton) {
             protectionOffHint.classList.toggle('hidden', true)
           }
         } else if (enabled) {
-          toggle.querySelector('p').textContent = ''
+          toggle.querySelector('#toggle-title').textContent = ''
           toggle.style.display = 'none'
+          toggle.disabled = false
+          toggle.style.opacity = ''
+          toggle.style.cursor = ''
+          toggle.removeAttribute('aria-disabled')
         }
 
         if (report) {

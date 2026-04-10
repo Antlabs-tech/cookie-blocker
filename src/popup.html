@@ -162,11 +162,17 @@
               <span class="material-symbols-outlined" id="toggle-icon">pause_circle</span>
             </div>
             <div class="flex flex-col items-start flex-1 overflow-hidden text-left">
-              <p class="text-text-charcoal dark:text-slate-200 text-sm font-bold">
+              <p class="text-text-charcoal dark:text-slate-200 text-sm font-bold" id="toggle-title">
                 Pause on this site
               </p>
-              <p class="text-text-muted-dark dark:text-slate-400 text-xs truncate">
+              <p class="text-text-muted-dark dark:text-slate-400 text-xs truncate" id="toggle-desc">
                 Temporarily allow all cookies
+              </p>
+              <p
+                id="global-whitelist-hint"
+                class="hidden text-amber-600 dark:text-amber-400 text-xs font-medium mt-0.5"
+              >
+                Known issue — will be fixed in next releases
               </p>
             </div>
             <span
@@ -205,7 +211,9 @@
             </div>
             <div class="flex flex-col items-start flex-1 overflow-hidden text-left">
               <p class="text-text-charcoal dark:text-slate-200 text-sm font-bold">Report Issue</p>
-              <p class="text-text-muted-dark dark:text-slate-400 text-xs truncate">Site not working correctly?</p>
+              <p class="text-text-muted-dark dark:text-slate-400 text-xs truncate">
+                Site not working correctly?
+              </p>
             </div>
             <span
               class="material-symbols-outlined text-text-muted-dark dark:text-slate-500 group-hover:text-primary text-[18px]"
@@ -217,7 +225,9 @@
       <footer
         class="px-5 py-4 bg-white dark:bg-slate-800 border-t border-border-defined dark:border-slate-700 flex items-center justify-between"
       >
-        <p class="text-center font-sans text-base text-text-charcoal dark:text-slate-300">Rate us:</p>
+        <p class="text-center font-sans text-base text-text-charcoal dark:text-slate-300">
+          Rate us:
+        </p>
         <div class="full-stars">
           <div class="rating-group">
             <input name="fst" value="5" type="radio" disabled checked />
