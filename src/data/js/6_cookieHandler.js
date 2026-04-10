@@ -1,3 +1,24 @@
+/**
+ * Cookie Blocker - Cookie handler for cookie consent blocking
+ * Copyright (C) 2026 Cookie Blocker contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * Based on I-Still-Dont-Care-About-Cookies:
+ * https://github.com/OhMyGuus/I-Still-Dont-Care-About-Cookies
+ */
+
 /*  Cookie handler */
 /*  Use this handler if it's possible to remove the warning using cookies and can't be handeld using css */
 
@@ -800,50 +821,50 @@ function getE(hostname) {
       ]
   }
 
-  const parts = hostname.split(".");
+  const parts = hostname.split('.')
 
   if (parts.length > 2) {
-    parts.shift();
-    return getE(parts.join("."));
+    parts.shift()
+    return getE(parts.join('.'))
   }
 
-  return false;
+  return false
 }
 
-(function () {
-  const hostname = document.location.hostname.replace(/^w{2,3}\d*\./i, "");
-  const cookies = getE(hostname);
+;(function () {
+  const hostname = document.location.hostname.replace(/^w{2,3}\d*\./i, '')
+  const cookies = getE(hostname)
   if (cookies) {
-    let counter = 0;
+    let counter = 0
 
     cookies.forEach(function (cookie) {
-      cookie = cookie.split("=");
-      const parts = ("; " + document.cookie).split("; " + cookie[0] + "=");
+      cookie = cookie.split('=')
+      const parts = ('; ' + document.cookie).split('; ' + cookie[0] + '=')
 
-      if (parts.length < 2 || parts[1].split(";")[0] != cookie[1]) {
+      if (parts.length < 2 || parts[1].split(';')[0] != cookie[1]) {
         // First try to delete the cookie
 
         if (parts.length > 1) {
-          const domainParts = hostname.split(".");
+          const domainParts = hostname.split('.')
 
           while (domainParts.length > 1) {
             document.cookie =
               cookie[0] +
-              "=; domain=" +
-              domainParts.join(".") +
-              "; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-            domainParts.shift();
+              '=; domain=' +
+              domainParts.join('.') +
+              '; expires=Thu, 01 Jan 1970 00:00:01 GMT;'
+            domainParts.shift()
           }
         }
 
-        document.cookie = cookie[0] + "=" + cookie[1];
-        counter++;
+        document.cookie = cookie[0] + '=' + cookie[1]
+        counter++
       }
-    });
+    })
 
     // Reload if cookies are enabled
     if (counter > 0 && document.cookie.length > 0) {
-      document.location.reload();
+      document.location.reload()
     }
   }
-})();
+})()

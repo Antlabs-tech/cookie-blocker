@@ -1,3 +1,24 @@
+/**
+ * Cookie Blocker - Chrome extension to block cookie consent popups and trackers
+ * Copyright (C) 2026 Cookie Blocker contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * Based on I-Still-Dont-Care-About-Cookies:
+ * https://github.com/OhMyGuus/I-Still-Dont-Care-About-Cookies
+ */
+
 import { blockUrls, commons, commonJSHandlers, rules } from '../rules.js'
 // Vars
 let initialized = false
