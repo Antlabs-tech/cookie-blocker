@@ -8,7 +8,8 @@
     "build": "vite build && node scripts/minify-data.mjs",
     "preview": "vite preview",
     "sync-issues": "node scripts/sync-issues.mjs",
-    "sync-issues:test": "node scripts/test-sync-issues.mjs"
+    "sync-issues:test": "node scripts/test-sync-issues.mjs",
+    "sync-issues:combine": "node scripts/combine-extracted-prs.mjs"
   },
   "devDependencies": {
     "@crxjs/vite-plugin": "^2.0.0-beta.26",
