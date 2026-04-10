@@ -19,6 +19,7 @@ const OUTPUT_DIR = path.join(ROOT_DIR, 'scripts', 'extracted-data', 'PRs')
 const WHITELIST_PATH = path.join(ROOT_DIR, 'scripts', 'extracted-data', 'whitelist.json')
 const TEST_ISSUES_COUNT = 100
 const DELAY_MS = 1000
+const REQ_PREFIX = '[REQ]'
 /** If set (e.g. 23810), fetch and process only that issue for verification */
 const TEST_ISSUE_NUMBER = process.env.TEST_ISSUE_NUMBER
   ? parseInt(process.env.TEST_ISSUE_NUMBER, 10)
@@ -157,26 +158,44 @@ async function main() {
     }
     issues = [issue]
   } else {
-    console.log('🧪 TESTING: Syncing first', TEST_ISSUES_COUNT, 'issues...\n')
+    console.log('🧪 TESTING: Syncing first', TEST_ISSUES_COUNT, 'issues (GraphQL)...\n')
 
-    const { data: allItems } = await withRetry(() =>
-      octokit.issues.listForRepo({
+    const query = `
+      query($owner: String!, $repo: String!, $first: Int!) {
+        repository(owner: $owner, name: $repo) {
+          issues(states: OPEN, first: $first, orderBy: { field: UPDATED_AT, direction: DESC }) {
+            nodes {
+              number
+              title
+              body
+            }
+          }
+        }
+      }
+    `
+
+    const response = await withRetry(() =>
+      octokit.graphql(query, {
         owner: OWNER,
         repo: REPO,
-        state: 'open',
-        per_page: TEST_ISSUES_COUNT,
-        page: 1,
+        first: TEST_ISSUES_COUNT,
       }),
     )
 
-    issues = allItems.filter((item) => !item.pull_request)
-    const prCount = allItems.length - issues.length
-    console.log(`📥 Fetched ${issues.length} issues (skipped ${prCount} PRs)\n`)
+    const nodes = response.repository?.issues?.nodes || []
+    issues = nodes.map((n) => ({
+      number: n.number,
+      title: n.title || '',
+      body: n.body || '',
+    }))
+
+    console.log(`📥 Fetched ${issues.length} issues via GraphQL\n`)
   }
 
   const stats = {
     issuesWithPRs: 0,
     issuesWithoutPRs: 0,
+    issuesSkippedNonREQ: 0,
     prsProcessed: 0,
     filesProcessed: 0,
     domainsAdded: 0,
@@ -192,6 +211,12 @@ async function main() {
     )
 
     try {
+      if (!issue.title?.startsWith(REQ_PREFIX)) {
+        stats.issuesSkippedNonREQ++
+        console.log(`   ⏭️  Skipping (title does not start with ${REQ_PREFIX})`)
+        continue
+      }
+
       const linkedPRs = await findLinkedPRsForIssue(githubCtx, issue.number, {
         title: issue.title,
         body: issue.body || '',
@@ -283,6 +308,7 @@ async function main() {
   console.log('📊 TEST SUMMARY')
   console.log('='.repeat(60))
   console.log(`Issues processed:           ${issues.length}`)
+  console.log(`Skipped (non-[REQ]):        ${stats.issuesSkippedNonREQ}`)
   console.log(`Issues with PRs:            ${stats.issuesWithPRs}`)
   console.log(`Issues without PRs:         ${stats.issuesWithoutPRs}`)
   console.log(`PRs processed:              ${stats.prsProcessed}`)

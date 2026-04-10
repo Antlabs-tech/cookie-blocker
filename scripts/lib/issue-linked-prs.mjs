@@ -60,14 +60,61 @@ const SEARCH_MIN_INTERVAL_MS = (() => {
   return Number.isFinite(n) && n >= 0 ? n : 2100
 })()
 
+/** Random jitter added to each search pacing wait */
+const SEARCH_JITTER_MS = (() => {
+  const raw = process.env.GITHUB_SEARCH_JITTER_MS
+  if (raw == null || raw === '') return 750
+  const n = parseInt(raw, 10)
+  return Number.isFinite(n) && n >= 0 ? n : 750
+})()
+
+/** Extra cooldown when Search returns 403 without helpful headers */
+const SEARCH_403_COOLDOWN_MS = (() => {
+  const raw = process.env.GITHUB_SEARCH_403_COOLDOWN_MS
+  if (raw == null || raw === '') return 30000
+  const n = parseInt(raw, 10)
+  return Number.isFinite(n) && n >= 0 ? n : 30000
+})()
+
 let lastSearchRequestAt = 0
+let searchCooldownUntil = 0
 
 async function paceSearchRequest() {
+  const now = Date.now()
+
+  if (now < searchCooldownUntil) {
+    await sleep(searchCooldownUntil - now)
+  }
+
   const elapsed = Date.now() - lastSearchRequestAt
   if (elapsed < SEARCH_MIN_INTERVAL_MS) {
-    await sleep(SEARCH_MIN_INTERVAL_MS - elapsed)
+    const baseWait = SEARCH_MIN_INTERVAL_MS - elapsed
+    const jitter = SEARCH_JITTER_MS ? Math.floor(Math.random() * (SEARCH_JITTER_MS + 1)) : 0
+    await sleep(baseWait + jitter)
   }
+
   lastSearchRequestAt = Date.now()
+}
+
+function getSearchCooldownMs(err, attempt) {
+  const minW = 1000
+  const maxW = 10 * 60_000
+  const h = err.response?.headers
+
+  const ra = h?.['retry-after'] ?? h?.['Retry-After']
+  if (ra != null) {
+    const sec = parseInt(String(ra), 10)
+    if (!Number.isNaN(sec)) return Math.min(Math.max(sec * 1000, minW), maxW)
+  }
+
+  const reset = h?.['x-ratelimit-reset'] ?? h?.['X-RateLimit-Reset']
+  if (reset != null) {
+    const resetMs = parseInt(String(reset), 10) * 1000 - Date.now()
+    if (!Number.isNaN(resetMs)) return Math.min(Math.max(resetMs, minW), maxW)
+  }
+
+  const backoff = SEARCH_403_COOLDOWN_MS * Math.max(1, attempt)
+  return Math.min(Math.max(backoff, minW), maxW)
 }
 
 /** #issueNumber with digit boundaries; also /issues/N in URLs */
@@ -200,13 +247,31 @@ export async function getLinkedPRNumbersFromSearch(ctx, issueNumber) {
   const q = `repo:${owner}/${repo} is:pr ${issueNumber}`
 
   try {
-    await paceSearchRequest()
-    const { data } = await withRetry(() =>
-      octokit.rest.search.issuesAndPullRequests({
-        q,
-        per_page: 100,
-      }),
-    )
+    const maxRetries = 3
+    let data = null
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await paceSearchRequest()
+        ;({ data } = await octokit.rest.search.issuesAndPullRequests({
+          q,
+          per_page: 100,
+        }))
+        break
+      } catch (err) {
+        const isRateLimit = err.status === 403 || err.status === 429
+        if (!isRateLimit || attempt === maxRetries) throw err
+
+        const coolDownMs = getSearchCooldownMs(err, attempt)
+        searchCooldownUntil = Math.max(searchCooldownUntil, Date.now() + coolDownMs)
+        console.log(
+          `   ⏳ Search rate limited. Cooling down ${Math.ceil(coolDownMs / 1000)}s (attempt ${attempt}/${maxRetries})...`,
+        )
+      }
+    }
+
+    if (!data) return numbers
+
     for (const item of data.items || []) {
       if (!item.pull_request || item.number === issueNumber) continue
       if (await validateSearchItemMentionsIssue(ctx, item, issueNumber)) {

@@ -15,10 +15,12 @@ dotenv.config({ path: path.join(ROOT_DIR, '.env') })
 // Configuration
 const OWNER = 'OhMyGuus'
 const REPO = 'I-Still-Dont-Care-About-Cookies'
-const OUTPUT_DIR = path.join(ROOT_DIR, 'scripts', 'extracted-data')
-const WHITELIST_PATH = path.join(ROOT_DIR, 'whitelist.json')
+const OUTPUT_DIR = path.join(ROOT_DIR, 'scripts', 'extracted-data', 'PRs')
+const WHITELIST_PATH = path.join(ROOT_DIR, 'scripts', 'extracted-data', 'whitelist.json')
 const BATCH_SIZE = 100 // Issues per page
 const DELAY_MS = 1000 // Delay between requests to avoid rate limiting
+const MAX_ISSUES = 3500
+const REQ_PREFIX = '[REQ]'
 
 // Initialize Octokit (GitHub API client)
 if (!process.env.GITHUB_TOKEN) {
@@ -163,42 +165,77 @@ async function saveWhitelist(whitelist) {
   await saveFile(WHITELIST_PATH, JSON.stringify(unique, null, 2) + '\n')
 }
 
-// Fetch all open issues with pagination (filters out PRs)
+// Fetch newest open issues with GraphQL cursor pagination (filters out PRs by using repository.issues)
 async function fetchAllOpenIssues() {
   const allIssues = []
-  let page = 1
+  let hasNextPage = true
+  let cursor = null
+  const first = BATCH_SIZE
 
   console.log('📥 Fetching open issues...')
 
-  while (true) {
-    const { data: issues } = await withRetry(() =>
-      octokit.issues.listForRepo({
+  const query = `
+    query($owner: String!, $repo: String!, $first: Int!, $after: String) {
+      repository(owner: $owner, name: $repo) {
+        issues(states: OPEN, first: $first, after: $after, orderBy: { field: UPDATED_AT, direction: DESC }) {
+          nodes {
+            number
+            title
+            body
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+        }
+      }
+    }
+  `
+
+  while (hasNextPage) {
+    const response = await withRetry(() =>
+      octokit.graphql(query, {
         owner: OWNER,
         repo: REPO,
-        state: 'open',
-        per_page: BATCH_SIZE,
-        page: page,
+        first,
+        after: cursor,
       }),
     )
 
-    if (issues.length === 0) break
+    const issuesConnection = response.repository?.issues
+    const nodes = issuesConnection?.nodes || []
 
-    // Filter out PRs (GitHub API returns PRs in the issues endpoint)
-    const realIssues = issues.filter((issue) => !issue.pull_request)
-    const prCount = issues.length - realIssues.length
+    if (nodes.length === 0) {
+      hasNextPage = false
+      break
+    }
 
-    allIssues.push(...realIssues)
-    console.log(`   Fetched ${allIssues.length} issues (page ${page}, skipped ${prCount} PRs)`)
+    allIssues.push(
+      ...nodes.map((n) => ({
+        number: n.number,
+        title: n.title || '',
+        body: n.body || '',
+      })),
+    )
 
-    if (issues.length < BATCH_SIZE) break
-    page++
+    console.log(`   Fetched ${allIssues.length} issues (GraphQL cursor page)`)
 
-    // Rate limit delay
-    await sleep(DELAY_MS)
+    if (allIssues.length >= MAX_ISSUES) {
+      hasNextPage = false
+      break
+    }
+
+    hasNextPage = issuesConnection.pageInfo?.hasNextPage
+    cursor = issuesConnection.pageInfo?.endCursor || null
+
+    if (hasNextPage) {
+      await sleep(DELAY_MS)
+    }
   }
 
-  console.log(`✅ Total open issues: ${allIssues.length}`)
-  return allIssues
+  const sliced = allIssues.slice(0, MAX_ISSUES)
+  console.log(`✅ Total open issues fetched: ${sliced.length}`)
+  return sliced
 }
 
 // Process a single issue
@@ -209,6 +246,12 @@ async function processIssue(issue, stats) {
   console.log(`\n🔍 Processing issue #${issueNumber}: ${issue.title.substring(0, 60)}...`)
 
   try {
+    if (!issue.title?.startsWith(REQ_PREFIX)) {
+      stats.issuesSkippedNonREQ++
+      console.log(`   ⏭️  Skipping (title does not start with ${REQ_PREFIX})`)
+      return []
+    }
+
     const linkedPRs = await findLinkedPRsForIssue(githubCtx, issueNumber, {
       title: issue.title,
       body: issueBody,
@@ -306,6 +349,7 @@ async function main() {
     totalIssues: 0,
     issuesWithPRs: 0,
     issuesWithoutPRs: 0,
+    issuesSkippedNonREQ: 0,
     prsProcessed: 0,
     filesProcessed: 0,
     domainsAdded: 0,
@@ -349,6 +393,7 @@ async function main() {
   console.log('📊 SUMMARY')
   console.log('='.repeat(60))
   console.log(`Total open issues:        ${stats.totalIssues}`)
+  console.log(`Skipped (non-[REQ]):      ${stats.issuesSkippedNonREQ}`)
   console.log(`Issues with PRs:          ${stats.issuesWithPRs}`)
   console.log(`Issues without PRs:       ${stats.issuesWithoutPRs}`)
   console.log(`PRs processed:            ${stats.prsProcessed}`)
