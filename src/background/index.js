@@ -331,6 +331,7 @@ async function recreateTabList(magic) {
 chrome.tabs.onCreated.addListener(onCreatedListener)
 chrome.tabs.onUpdated.addListener(onUpdatedListener)
 chrome.tabs.onRemoved.addListener(onRemovedListener)
+chrome.runtime.setUninstallURL('https://cookieblocker.netlify.app/uninstall/')
 
 // chrome.runtime.onStartup.addListener(async () => await initialize(true));
 chrome.runtime.onInstalled.addListener(async (details) => {
@@ -338,7 +339,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     // Code to be executed on first install
     // eg. open a tab with a url
     chrome.tabs.create({
-      url: 'https://cookieblocker.tilda.ws/',
+      url: 'https://cookieblocker.netlify.app/',
     })
   } else if (details.reason === chrome.runtime.OnInstalledReason.UPDATE) {
     // When extension is updated
